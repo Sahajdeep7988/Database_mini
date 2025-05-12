@@ -1,465 +1,326 @@
-# SQL-like Database System - Implementation Documentation
+# SQL-like Database System - Technical Documentation
 
 ## Overview
 
-This document provides detailed information about the implementation of our SQL-like database system, created as an end-semester OOPs project. The system is implemented in C++17 and provides a command-line interface for SQL-like operations on data stored in plain text files.
+This document provides detailed technical information about the SQL-like database system implementation. The system is designed to provide a simple but effective in-memory and disk-persistent database engine with SQL-like syntax for data storage and retrieval.
 
-## Core Components
+## Author
+**Sahajdeep Singh**  
+Email: sahajdeepsingh404@gmail.com  
+Mobile: +91 7988168548
 
-### 1. Database System (DatabaseSystem.h)
+## Architecture
 
-The database system manages multiple databases:
+The system follows a modular architecture with the following major components:
 
-- Creates, deletes, and switches between databases
-- Maintains a current active database
-- Organizes databases in directories on the file system
+### Core Components
 
-Implementation details:
-- Uses a hash map to store database managers
-- Each database has its own data directory
-- Scans the base directory to load existing databases
+1. **DatabaseSystem**: The top-level component that manages multiple databases
+2. **DatabaseManager**: Manages a single database and its tables
+3. **Table**: Represents a database table with columns and records
+4. **Column**: Defines a table column with name, data type, and constraints
+5. **QueryParser**: Parses and executes SQL-like queries
+6. **DataType**: Defines and manages supported data types
 
-### 2. Data Types (DataType.h)
-
-The database supports four data types with validation:
-
-- **INT**: Integer values
-  - Validated using `std::stoi()`
-- **BIGINT**: Large integer values (more than 9 digits)
-  - Validated using `std::stoll()`
-- **STRING**: Text values (no specific validation required)
-- **DATE**: Date values in YYYY-MM-DD format
-  - Validated using regex pattern and range checks for months and days
-  - Includes leap year validation for February
-
-Implementation details:
-- The `Type` enum class defines the available types
-- The `DataType` class provides validation methods for each type
-- Type conversion methods between string representations and enum values
-
-### 3. Columns (Column.h)
-
-Columns represent the structure of tables with the following features:
-
-- Support for constraints: PRIMARY KEY, UNIQUE, NOT NULL
-- Validation of values against data types and constraints
-- Tracking of unique values to enforce uniqueness
-
-Implementation details:
-- Constraints are tracked using boolean flags
-- A set of unique values is maintained for columns with UNIQUE or PRIMARY KEY constraints
-- Value validation is performed against both data type and constraint rules
-
-### 4. Tables (Table.h)
-
-Tables manage collections of columns and records with the following operations:
-
-- Creation, deletion, and modification of table structure
-- Insertion, selection, updating, and deletion of records
-- Persistence to text files in the data/ directory
-
-Implementation details:
-- Tables are stored in two files:
-  - `tableName.meta`: Stores column definitions and constraints
-  - `tableName.data`: Stores the actual records as comma-separated values
-- Records are stored in memory as vectors of strings
-- Conditions for WHERE clauses are represented as a linked structure of condition objects
-
-### 5. Database Manager (DatabaseManager.h)
-
-The database manager handles:
-
-- Creation and management of tables within a database
-- Loading tables from disk on startup
-- Providing access to tables for query operations
-
-Implementation details:
-- Uses a hash map to store and retrieve tables by name
-- Scans the data directory to load existing tables
-- Manages table lifecycle including creation and deletion
-
-### 6. Query Parser (QueryParser.h)
-
-The query parser interprets SQL-like commands:
-
-- Parses and validates SQL syntax
-- Extracts parameters and conditions
-- Forwards requests to the appropriate table methods
-
-Implementation details:
-- Regular expressions are used for parsing SQL commands
-- Recursive descent for parsing complex conditions with AND/OR operators
-- Results are returned through a `QueryResult` structure
-
-### 7. String and Aggregate Functions
-
-The system includes utility functions:
-
-- **String Functions** (StringFunction.h):
-  - UPPER(): Convert text to uppercase
-  - LOWER(): Convert text to lowercase
-  - LENGTH(): Get string length
-  - SUBSTRING(): Extract part of a string
-
-- **Aggregate Functions** (AggregateFunction.h):
-  - COUNT(): Count non-empty values
-  - SUM(): Add numeric values
-  - AVG(): Calculate average of numeric values
-  - MIN(): Find minimum value
-  - MAX(): Find maximum value
-
-## SQL Command Implementation
-
-### Database Commands
-
-#### 1. CREATE DATABASE
-
-```sql
-CREATE DATABASE dbName;
-```
-
-Implementation:
-- Creates a new directory structure for the database
-- Initializes a DatabaseManager for the new database
-
-#### 2. DROP DATABASE
-
-```sql
-DROP DATABASE dbName;
-```
-
-Implementation:
-- Removes the database from the system
-- (Note: Currently doesn't physically delete database files)
-
-#### 3. USE DATABASE
-
-```sql
-USE dbName;
-```
-
-Implementation:
-- Sets the current active database
-- All subsequent table operations apply to this database
-
-#### 4. EXIT
-
-```sql
-EXIT;
-```
-
-Implementation:
-- Exits the current database, returning to the main SQL prompt
-- Clears the current database selection
-
-### Table Commands
-
-#### 1. CREATE TABLE
-
-```sql
-CREATE TABLE tableName (
-    column1 TYPE1 [CONSTRAINTS],
-    column2 TYPE2 [CONSTRAINTS],
-    ...
-);
-```
-
-Implementation:
-- Parses column definitions using regex
-- Validates data types and constraints
-- Creates table in memory and initializes data files
-
-#### 2. DROP TABLE
-
-```sql
-DROP TABLE tableName;
-```
-
-Implementation:
-- Removes table from memory
-- Deletes associated data files
-
-#### 3. ALTER TABLE
-
-```sql
-ALTER TABLE tableName ADD columnName TYPE [CONSTRAINTS];
-ALTER TABLE tableName DROP columnName;
-```
-
-Implementation:
-- For ADD: Adds new column to table structure and updates records with empty values
-- For DROP: Removes column from table structure and updates records
-
-#### 4. INSERT
-
-```sql
-INSERT INTO tableName (column1, column2, ...) VALUES (value1, value2, ...);
-```
-
-Implementation:
-- Validates column names
-- Validates values against data types and constraints
-- Adds record to table and updates data file
-
-#### 5. SELECT
-
-```sql
-SELECT column1, column2, ... FROM tableName [WHERE conditions];
-```
-
-Implementation:
-- Supports column selection or * for all columns
-- WHERE clause with comparison operators (=, !=, <, >, <=, >=)
-- Logical operators (AND, OR) for complex conditions
-
-#### 6. UPDATE
-
-```sql
-UPDATE tableName SET column1=value1, column2=value2, ... [WHERE conditions];
-```
-
-Implementation:
-- Updates specified columns in records matching the WHERE condition
-- Validates new values against data types and constraints
-
-#### 7. DELETE
-
-```sql
-DELETE FROM tableName [WHERE conditions];
-```
-
-Implementation:
-- Removes records matching the WHERE condition
-- Updates unique value tracking for unique columns
-
-#### 8. DESC
-
-```sql
-DESC tableName;
-```
-
-Implementation:
-- Displays detailed information about the table's structure
-- Shows column names, data types, and constraints
-
-#### 9. SHOW TABLES
-
-```sql
-SHOW TABLES;
-```
-
-Implementation:
-- Lists all tables in the current database
-- Equivalent to the special command `.tables`
-
-## Object-Oriented Design Principles
-
-The following OOP principles are applied in the implementation:
-
-### 1. Encapsulation
-
-- Each class has well-defined responsibilities
-- Private members are used to hide implementation details
-- Public interfaces provide controlled access to functionality
-
-### 2. Inheritance
-
-- The class hierarchy reflects the is-a relationship between concepts
-
-### 3. Polymorphism
-
-- Type-specific behavior is implemented through virtual methods
-
-### 4. Abstraction
-
-- Complex implementation details are hidden behind simple interfaces
-- Classes represent abstract concepts (tables, columns, etc.)
-
-### 5. Modularity
-
-- The system is divided into separate modules with specific responsibilities
-- Each header file focuses on a single concept
-
-## Error Handling
-
-The system provides error handling through:
-
-- Validation of input values
-- Checking of constraints before modifications
-- Exception handling for runtime errors
-- Meaningful error messages through the QueryResult structure
-
-## File Structure
+### Directory Structure
 
 ```
-├── CMakeLists.txt          # Build configuration
-├── README.md               # User documentation
-├── DOCUMENTATION.md        # Implementation details (this file)
-├── databases/              # Base directory for all databases
-│   ├── [dbName]/           # Database directory
-│   │   └── data/           # Data storage directory
-│   │       ├── [tableName].meta  # Table metadata
-│   │       └── [tableName].data  # Table records
 ├── include/                # Header files
 │   ├── AggregateFunction.h # Aggregate functions (COUNT, SUM, etc.)
 │   ├── Column.h            # Column class
 │   ├── DataType.h          # Data type definitions
 │   ├── DatabaseManager.h   # Database manager
-│   ├── DatabaseSystem.h    # Database system for managing databases
+│   ├── DatabaseSystem.h    # Database system
 │   ├── QueryParser.h       # SQL query parser
 │   ├── StringFunction.h    # String functions (UPPER, LOWER, etc.)
 │   └── Table.h             # Table class
 └── src/                    # Source files
-    └── main.cpp            # Main application and command-line interface
+    └── main.cpp            # Main application
 ```
 
-## Data Persistence
+### On-Disk Storage Format
 
-### Database Organization
+Each database is stored as a directory structure:
 
-Databases are organized as directories:
+```
+databases/             # Base directory for all databases
+├── mydatabase/        # A specific database
+│   └── data/          # Data directory inside the database
+│       ├── table1.meta # Table metadata (columns, types, constraints)
+│       ├── table1.data # Table data records
+│       ├── table2.meta # Another table's metadata
+│       └── table2.data # Another table's data
+└── anotherdatabase/   # Another database
+    └── data/
+        ├── ...
+```
 
-1. **Base Directory** (`databases/`):
-   - Contains subdirectories for each database
+#### File Formats
 
-2. **Database Directories** (`databases/dbName/`):
-   - Contains a `data/` subdirectory for tables
+1. **Table Metadata (.meta)**:
+   Each line represents a column with comma-separated values:
+   ```
+   columnName,dataType,PK,UQ,NN
+   ```
+   Where:
+   - `columnName` is the name of the column
+   - `dataType` is one of: INT, BIGINT, STRING, DATE
+   - `PK` is either "PK" if it's a primary key, or empty
+   - `UQ` is either "UQ" if it's unique, or empty
+   - `NN` is either "NN" if it's not null, or empty
 
-3. **Table Files**:
-   - **Metadata Files** (`databases/dbName/data/tableName.meta`):
-     - Each line contains one column definition
-     - Format: `columnName,dataType,primaryKey,unique,notNull`
-     - PK = Primary Key, UQ = Unique, NN = Not Null
+2. **Table Data (.data)**:
+   Each line represents a record with comma-separated values matching the columns defined in the metadata file.
 
-   - **Data Files** (`databases/dbName/data/tableName.data`):
-     - Each line contains one record
-     - Values are comma-separated
-     - Order matches the column order in the metadata file
+## Implementation Details
 
-## Performance Considerations
+### Data Types
 
-This implementation is focused on educational purposes rather than performance:
+The system supports the following data types:
 
-- In-memory storage with persistence to text files
-- Linear search for record operations
-- No indexing for faster retrieval
-- No optimization for large datasets
+1. **INT**: Integer numbers stored as `int` (32-bit signed integers)
+2. **BIGINT**: Large integers stored as `long long` (64-bit signed integers)
+3. **STRING**: Text data stored as `std::string`
+4. **DATE**: Date values in YYYY-MM-DD format stored as `std::string`
 
-## Example Use Cases
+### Constraints
 
-### Multiple Database Management
+The system supports the following constraints:
+
+1. **PRIMARY KEY**: Unique identifier for records (implies NOT NULL)
+2. **UNIQUE**: Values must be unique across all records
+3. **NOT NULL**: Values cannot be empty/null
+
+### Case Sensitivity
+
+All SQL commands and identifiers (table names, column names) are case-insensitive. String data comparisons in the WHERE clause are also case-insensitive, making the system more user-friendly.
+
+### Command Parsing
+
+The system uses regular expressions (std::regex) to parse SQL commands, providing a flexible way to handle variations in syntax while maintaining proper validation. Commands are processed in the following order:
+
+1. Check if it's a special dot command (.help, .exit, etc.)
+2. Check if it's a database-level command (CREATE DATABASE, USE, etc.)
+3. Check if it's a table-level command (CREATE TABLE, INSERT, etc.)
+
+### Error Handling
+
+The system implements robust error handling throughout the codebase:
+
+1. **Input validation**: Commands are validated before execution
+2. **Database operations**: Errors during file/directory operations are properly reported
+3. **Data validation**: Data is validated against constraints before insertion
+4. **Query execution**: Syntax and semantic errors are caught and reported
+
+### Platform Compatibility
+
+The system is designed to work on multiple platforms (Windows, Unix-based systems) by:
+
+1. Using conditional compilation (`#ifdef _WIN32`) for platform-specific code
+2. Handling path separators appropriately (backslash on Windows, forward slash on Unix)
+3. Using proper directory and file operations for each platform
+
+## Class Details
+
+### DatabaseSystem
+
+Manages multiple databases and provides operations for creating, dropping, and using databases.
+
+**Key Methods**:
+- `createDatabase(const std::string& dbName)`: Creates a new database
+- `dropDatabase(const std::string& dbName)`: Deletes a database
+- `useDatabase(const std::string& dbName)`: Selects a database
+- `getCurrentDatabaseManager()`: Gets the current database manager
+- `getAllDatabaseNames()`: Lists all databases
+
+### DatabaseManager
+
+Manages a single database with multiple tables.
+
+**Key Methods**:
+- `createTable(const std::string& tableName)`: Creates a new table
+- `dropTable(const std::string& tableName)`: Deletes a table
+- `getTable(const std::string& tableName)`: Gets a table by name
+- `getAllTableNames()`: Lists all tables in the database
+- `setDataDirectory(const std::string& dirPath)`: Sets the data directory path
+
+### Table
+
+Represents a database table with columns and records.
+
+**Key Methods**:
+- `addColumn(...)`: Adds a column to the table
+- `removeColumn(...)`: Removes a column
+- `insertRecord(...)`: Inserts a new record
+- `selectRecords(...)`: Retrieves records based on criteria
+- `updateRecords(...)`: Updates records
+- `deleteRecords(...)`: Deletes records
+- `drop()`: Deletes the table
+
+### Column
+
+Defines a table column with name, data type, and constraints.
+
+**Key Properties**:
+- Name
+- Data type
+- Primary key flag
+- Unique constraint flag
+- Not null constraint flag
+
+**Key Methods**:
+- `validateValue(...)`: Validates a value against the column's constraints
+- `checkAndAddUniqueValue(...)`: Checks and enforces uniqueness
+
+### QueryParser
+
+Parses and executes SQL-like queries.
+
+**Key Methods**:
+- `parseQuery(...)`: Main entry point for query parsing
+- Specialized parsers for each type of query (CREATE TABLE, SELECT, etc.)
+
+## SQL Command Syntax
+
+### Database Operations
 
 ```sql
--- Create databases
-CREATE DATABASE school;
-CREATE DATABASE store;
+-- Create a new database
+CREATE DATABASE dbName;
 
--- Switch to school database
-USE school;
+-- Drop a database
+DROP DATABASE dbName;
 
--- Create tables in school database
-CREATE TABLE students (
-    id INT PRIMARY KEY,
-    name STRING NOT NULL,
-    age INT
-);
+-- Use a database
+USE dbName;
 
--- View tables in current database
-SHOW TABLES;
-
--- Get details of a table
-DESC students;
-
--- Exit the school database
+-- Exit current database
 EXIT;
-
--- Switch to store database
-USE store;
-
--- Create tables in store database
-CREATE TABLE products (
-    product_id INT PRIMARY KEY,
-    name STRING NOT NULL,
-    price INT
-);
 ```
 
-### Student Database
+### Table Operations
 
 ```sql
--- Create a table for students
-CREATE TABLE students (
-    id INT PRIMARY KEY,
-    name STRING NOT NULL,
-    age INT,
-    email STRING UNIQUE,
-    enrollment_date DATE
+-- Create a table
+CREATE TABLE tableName (
+    column1 TYPE1 [PRIMARY KEY] [UNIQUE] [NOT NULL],
+    column2 TYPE2 [CONSTRAINTS],
+    ...
 );
 
--- Insert student records
-INSERT INTO students (id, name, age, email, enrollment_date)
-VALUES (1, 'John Doe', 20, 'john@example.com', '2023-01-15');
+-- Drop a table
+DROP TABLE tableName;
 
-INSERT INTO students (id, name, age, email, enrollment_date)
-VALUES (2, 'Jane Smith', 22, 'jane@example.com', '2023-02-10');
+-- Add a column
+ALTER TABLE tableName ADD columnName TYPE [CONSTRAINTS];
 
--- Query students
-SELECT * FROM students WHERE age > 21;
+-- Drop a column
+ALTER TABLE tableName DROP columnName;
 
--- Update student information
-UPDATE students SET age = 21 WHERE id = 1;
+-- Show table schema
+DESC tableName;
 
--- Delete student
-DELETE FROM students WHERE id = 2;
+-- Show all tables
+SHOW TABLES;
 ```
 
-### Product Inventory with BIGINT
+### Data Operations
 
 ```sql
--- Create a product table
-CREATE TABLE products (
-    product_id BIGINT PRIMARY KEY,
-    name STRING NOT NULL,
-    category STRING,
-    price INT NOT NULL,
-    stock_quantity INT
-);
+-- Insert data
+INSERT INTO tableName (column1, column2, ...) VALUES (value1, value2, ...);
 
--- Insert products with large IDs
-INSERT INTO products (product_id, name, category, price, stock_quantity)
-VALUES (9876543210, 'Laptop', 'Electronics', 1200, 10);
+-- Select data
+SELECT column1, column2, ... FROM tableName [WHERE conditions];
+SELECT * FROM tableName [WHERE conditions];
 
--- Query products
-SELECT name, price FROM products WHERE stock_quantity < 5;
+-- Update data
+UPDATE tableName SET column1=value1, column2=value2, ... [WHERE conditions];
 
--- Update stock
-UPDATE products SET stock_quantity = 8 WHERE product_id = 9876543210;
+-- Delete data
+DELETE FROM tableName [WHERE conditions];
 ```
 
-## Special Commands
+### WHERE Clause Syntax
 
-The system provides several special dot commands:
+The WHERE clause supports the following operators:
 
-- `.help`: Display help message
-- `.databases`: List all databases in the system
-- `.tables`: List all tables in the current database
-- `.exit`: Exit the program
+- `=`: Equal to
+- `!=`: Not equal to
+- `>`: Greater than
+- `<`: Less than
+- `>=`: Greater than or equal to
+- `<=`: Less than or equal to
+- `AND`: Logical AND
+- `OR`: Logical OR
 
-## Future Enhancements
+Examples:
+```sql
+-- Simple comparison
+WHERE age > 25
 
-Possible enhancements for future versions:
+-- Multiple conditions
+WHERE age > 25 AND salary <= 75000
 
-1. Support for JOIN operations between tables
-2. Indexing for faster data retrieval
-3. Transaction support with COMMIT/ROLLBACK
-4. Foreign key constraints
-5. More advanced data types (FLOAT, BOOLEAN, etc.)
-6. Support for user-defined functions
-7. Better error handling and reporting
-8. Physical deletion of dropped databases
-9. Database backup and restore commands
-10. Query optimization
+-- Complex conditions
+WHERE (age > 25 AND salary <= 75000) OR (name = 'John' AND hire_date > '2023-01-01')
+```
+
+## Recent Improvements
+
+The system has recently been enhanced with:
+
+1. **BIGINT Data Type**: Support for large integers exceeding the 32-bit INT limit
+2. **Case-Insensitive Behavior**: All commands and string comparisons are now case-insensitive
+3. **EXIT Command**: Added to exit the current database without closing the application
+4. **Platform Fixes**: 
+   - Improved Windows path handling
+   - Fixed directory creation/deletion on all platforms
+   - Better error handling for file operations
+5. **Robustness**: Added additional validation and error handling
+
+## Limitations and Future Work
+
+Current limitations:
+
+1. **No Foreign Keys**: The system doesn't support foreign key relationships between tables
+2. **No Joins**: No support for table JOIN operations
+3. **Limited Data Types**: Only basic data types are supported (no FLOAT, DECIMAL, etc.)
+4. **No Transactions**: No support for transaction operations (BEGIN, COMMIT, ROLLBACK)
+5. **No Indexing**: No index support for faster queries
+
+Potential future enhancements:
+
+1. Add support for more data types (FLOAT, DECIMAL, BOOLEAN)
+2. Implement basic JOIN operations
+3. Add transaction support
+4. Implement indexes for faster queries
+5. Add support for aggregate functions (COUNT, SUM, AVG)
+6. Implement more SQL commands (GROUP BY, HAVING, ORDER BY, etc.)
+
+## Troubleshooting and Debugging
+
+### Common Issues
+
+1. **Permission Errors**:
+   - Cause: Insufficient permissions to create/write files
+   - Solution: Run the application with appropriate permissions or change the target directory
+
+2. **Path Issues**:
+   - Cause: Invalid or inaccessible paths
+   - Solution: Ensure paths are valid and accessible
+
+3. **Data Validation Errors**:
+   - Cause: Data violates constraints (primary key, unique, not null)
+   - Solution: Ensure data complies with table constraints
+
+### Debugging Tips
+
+1. Check error messages for specific details
+2. Verify file and directory permissions
+3. Examine the database directories to ensure files are created/updated correctly
+4. For development: Add debug output to track command execution flow
 
 ## Conclusion
 
-This SQL-like database system demonstrates the application of object-oriented programming principles in C++. It provides a solid foundation for understanding database concepts and can be extended for more complex functionality. The multi-database support allows for better organization of data and more closely resembles professional database management systems like MySQL. 
+This SQL-like database system provides a lightweight yet functional implementation of database operations with persistent storage. It's designed for educational purposes and small applications. While it lacks some features of full-fledged database systems, it demonstrates the core concepts of database management systems and SQL query processing. 
