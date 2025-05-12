@@ -1,0 +1,52 @@
+# Compiled Object files
+*.o
+*.obj
+*.slo
+*.lo
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.a
+*.lib
+
+# Executables
+sqldb
+*.exe
+*.out
+*.app
+
+# Build directories
+build/
+bin/
+obj/
+Debug/
+Release/
+
+# Database files
+databases/
+data/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+.vs/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+cmake-build-debug/
+cmake-build-release/
+
+# OS specific
+.DS_Store
+Thumbs.db 
