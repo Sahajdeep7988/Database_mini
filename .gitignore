@@ -1,3 +1,14 @@
+# Build directories
+build/
+bin/
+out/
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
 # Compiled Object files
 *.o
 *.obj
@@ -14,39 +25,22 @@
 *.dll
 
 # Compiled Static libraries
+*.lai
+*.la
 *.a
 *.lib
 
 # Executables
-sqldb
 *.exe
 *.out
 *.app
 
-# Build directories
-build/
-bin/
-obj/
-Debug/
-Release/
-
-# Database files
+# Database files (runtime created)
 databases/
-data/
 
-# IDE files
+# Editor specific
 .vscode/
 .idea/
 *.swp
-.vs/
-
-# CMake
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-cmake-build-debug/
-cmake-build-release/
-
-# OS specific
-.DS_Store
-Thumbs.db 
+*~
+.DS_Store 
