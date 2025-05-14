@@ -2,6 +2,7 @@
 build/
 bin/
 out/
+obj/
 
 # CMake generated files
 CMakeFiles/
@@ -37,6 +38,7 @@ Makefile
 
 # Database files (runtime created)
 databases/
+data/
 
 # Editor specific
 .vscode/
@@ -44,3 +46,14 @@ databases/
 *.swp
 *~
 .DS_Store 
+
+# Test files
+run_test.bat
+run_test.ps1
+run_test.sh
+simple_test.sql
+test_*.sql
+test_*.bat
+test_transactions/
+*_test.cpp
+*_test_*.cpp 

@@ -1,355 +1,290 @@
 # SQL-like Database System
 
-A simple SQL-like database system implemented in C++ that handles basic database operations with persistence. The system supports multiple databases, tables, and various SQL commands.
-
-> **⚠️ IMPORTANT:** Unlike standard SQL, commands in this system should NOT end with semicolons. 
-> See [USAGE_NOTES.md](USAGE_NOTES.md) for more details.
+A comprehensive SQL-like database system implemented in C++ that handles database operations with persistence. This system provides a lightweight, standalone database solution with support for multiple databases, tables, SQL commands, and ACID-compliant transactions.
 
 ## Author
 **Sahajdeep Singh**  
 Email: sahajdeepsingh404@gmail.com  
 Mobile: +91 7988168548
 
-## Features
+## Overview
 
-### Data Types
-- **INT**: For integer values
-- **BIGINT**: For large integer values (>9 digits)
-- **STRING**: For text values
-- **DATE**: For date values (YYYY-MM-DD format)
+This C++ database system provides SQL-like functionality with the following features:
 
-### Database Commands
-- **CREATE DATABASE dbName**: Creates a new database
-- **DROP DATABASE dbName**: Deletes an existing database
-- **USE dbName**: Selects a database to work with
-- **EXIT**: Exits the current database (returns to no database selected)
-- **SHOW TABLES**: Lists all tables in the current database
+- Multiple database support
+- Table creation and management
+- Data types with validation
+- SQL command processing
+- ACID-compliant transactions
+- B-Tree indexing
+- Buffer pool management
+- File-based persistence
+- Cross-platform compatibility
 
-### Table Commands
-- **CREATE TABLE tableName (col1 TYPE1 [CONSTRAINTS], ...)**: Creates a new table
-- **DROP TABLE tableName**: Deletes a table
-- **ALTER TABLE tableName ADD columnName TYPE [CONSTRAINTS]**: Adds a column
-- **ALTER TABLE tableName DROP columnName**: Removes a column
-- **DESC tableName**: Shows table schema
-
-### Data Manipulation
-- **INSERT INTO tableName (col1, col2, ...) VALUES (val1, val2, ...)**: Inserts data
-- **SELECT col1, col2, ... FROM tableName [WHERE conditions]**: Retrieves data
-- **UPDATE tableName SET col1=val1, col2=val2, ... [WHERE conditions]**: Updates data
-- **DELETE FROM tableName [WHERE conditions]**: Deletes data
-
-### WHERE Clause and Logical Operators
-- **Comparison operators**: `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`
-- **Logical operators**: 
-  - `AND`: Returns true when both conditions are true
-  - `OR`: Returns true when either condition is true
-  - `NOT`: Negates a condition
-- **NULL checks**: `IS NULL`, `IS NOT NULL`
-- **Value checks**: `IN`, `BETWEEN`, `LIKE`
-
-### Constraints
-- **PRIMARY KEY**: Unique identifier for a row
-- **UNIQUE**: Values must be unique
-- **NOT NULL**: Values cannot be null
-
-### Special Commands
-- **.help**: Displays help information
-- **.databases**: Lists all databases
-- **.tables**: Lists tables in the current database
-- **.flush**: Flushes all data to disk immediately
-- **.exit**: Exits the program
-
-### Transaction Commands
-- **BEGIN TRANSACTION** (or **BEGIN**): Starts a new transaction
-- **COMMIT**: Commits the current transaction, making changes permanent
-- **ROLLBACK**: Rolls back the current transaction, discarding all changes
-
-## Key Features
-- **Case-insensitive commands**: All SQL commands are case-insensitive
-- **Persistent storage**: Databases and tables are stored on disk
-- **Multiple database support**: Create and manage multiple databases
-- **Error handling**: Robust error handling and reporting
-- **Cross-platform**: Works on Windows and Unix-based systems
-- **Advanced Storage Engine**: Efficient data storage and retrieval with B-Tree indexing
-- **Transaction Support**: ACID-compliant transactions with commit and rollback
-- **Buffer Pool Management**: LRU-based caching for improved performance
-
-## Recent Updates
-- Fixed logical operators in WHERE clauses, particularly AND conditions
-- Improved condition parsing with better regex patterns
-- Added comprehensive test scripts for Windows (run_test.bat and run_test.ps1)
-- Updated documentation with detailed examples of logical operators
-- Enhanced error handling for complex queries
-
-## Running Tests
-You can run the included test scripts to verify the system functionality:
-
-### Windows (PowerShell)
-```powershell
-# Run the PowerShell test script
-.\run_test.ps1
-```
-
-### Windows (Command Prompt)
-```cmd
-# Run the batch test script
-run_test.bat
-```
-
-### Linux/macOS
-```bash
-# Run the shell test script
-chmod +x run_test.sh  # Make executable (first time only)
-./run_test.sh
-```
-
-The test scripts will compile the program and run a series of SQL commands from simple_test.sql, demonstrating various features including the logical operators in WHERE clauses.
-
-## Storage Engine
-
-The database system includes a robust storage engine with the following components:
-
-### StorageEngine
-The main class that manages physical data storage, table operations, and transaction coordination.
-
-### BufferPoolManager
-An LRU-based buffer pool for caching database pages in memory, with methods for:
-- Page allocation and deallocation
-- Page fetching and pinning/unpinning
-- Dirty page tracking and flushing to disk
-
-### BTreeIndex
-A B-Tree index implementation for efficient data retrieval with logarithmic time complexity, supporting:
-- Key insertion and deletion
-- Point queries
-- Range queries
-
-### TransactionManager
-Transaction support with ACID properties:
-- Write-ahead logging
-- Lock management (shared/exclusive locks)
-- Transaction states (active, committed, aborted)
-
-### Performance Testing
-The system includes a performance testing tool to evaluate:
-- Insert throughput
-- Point query performance
-- Range query performance
-- Update performance
-- Delete performance
-
-## Building and Running
+## Installation
 
 ### Prerequisites
-- C++17 compatible compiler (GCC, Clang, MSVC)
-- CMake 3.10 or higher
 
-### Build
+- C++17 compatible compiler (GCC 7+, Clang 5+, MSVC 2017+)
+- CMake 3.10+ (recommended for building)
+
+### Building from Source
+
+#### Using CMake (Recommended)
+
 ```bash
-# Create build directory
-mkdir build
-cd build
+# Clone the repository
+git clone https://github.com/Sahajdeep7988/Database_mini.git
+cd Database_mini
 
-# Configure with CMake
+# Create build directory
+mkdir build && cd build
+
+# Generate build files
 cmake ..
 
-# Build
+# Build the project
 cmake --build .
 ```
 
-### Run
+#### Manual Build
+
 ```bash
-# Run the main application
+# For Linux/macOS
+g++ -std=c++17 src/main.cpp src/storage_engine/*.cpp -o sqldb -I include/
+
+# For Windows (MinGW)
+g++ -std=c++17 src/main.cpp src/storage_engine/*.cpp -o sqldb.exe -I include/
+
+# For Windows (MSVC)
+cl /std:c++17 /EHsc /Iinclude src/main.cpp src/storage_engine/*.cpp /Fesqldb.exe
+```
+
+## Usage
+
+### Starting the Application
+
+```bash
+# Linux/macOS
 ./sqldb
 
-# Run storage engine tests
-./storage_engine_test
-
-# Run performance tests
-./storage_engine_perf_test [record_count]
+# Windows
+sqldb.exe
 ```
 
-### Performance Testing Scripts
-```bash
-# On Windows
-run_performance_test.bat
+### Command Syntax
 
-# On Linux/Mac
-./run_performance_test.sh
+> **⚠️ IMPORTANT:** Unlike standard SQL, commands in this system should NOT end with semicolons.
+
+### Quickstart Example
+
+```
+# Create a database
+CREATE DATABASE school
+
+# Use the database
+USE school
+
+# Create a table
+CREATE TABLE students (id INT PRIMARY KEY, name STRING NOT NULL, age INT)
+
+# Insert data
+INSERT INTO students (id, name, age) VALUES (1, 'John Doe', 20)
+
+# Query data
+SELECT * FROM students
+
+# Update data
+UPDATE students SET age = 21 WHERE id = 1
+
+# Exit database
+EXIT
+
+# Exit application
+.exit
 ```
 
-## Detailed Usage Guide
+## SQL Commands Reference
 
-### Getting Started
-1. Start the application by running the executable
-2. The welcome screen will display available commands
-3. Create a database with `CREATE DATABASE mydatabase;`
-4. Select the database with `USE mydatabase;`
-5. Create tables and manipulate data using SQL-like commands
+### Data Types
 
-### Database Operations
+| Type | Description | Example |
+|------|-------------|---------|
+| INT | Integer values | 42 |
+| BIGINT | Large integer values | 9876543210 |
+| STRING | Text values | 'Hello World' |
+| DATE | Date values (YYYY-MM-DD) | '2023-10-15' |
+
+### Database Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| CREATE DATABASE | Creates a new database | CREATE DATABASE school |
+| DROP DATABASE | Deletes a database | DROP DATABASE school |
+| USE | Switches to a database | USE school |
+| EXIT | Exits the current database | EXIT |
+
+### Table Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| CREATE TABLE | Creates a new table | CREATE TABLE students (id INT PRIMARY KEY, name STRING) |
+| DROP TABLE | Deletes a table | DROP TABLE students |
+| ALTER TABLE ADD | Adds a column | ALTER TABLE students ADD email STRING |
+| ALTER TABLE DROP | Removes a column | ALTER TABLE students DROP email |
+| DESC | Shows table schema | DESC students |
+| SHOW TABLES | Lists all tables | SHOW TABLES |
+
+### Data Manipulation Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| INSERT INTO | Inserts data | INSERT INTO students (id, name) VALUES (1, 'John') |
+| SELECT | Retrieves data | SELECT * FROM students WHERE age > 20 |
+| UPDATE | Updates data | UPDATE students SET age = 21 WHERE id = 1 |
+| DELETE FROM | Deletes data | DELETE FROM students WHERE id = 1 |
+
+### Transaction Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| BEGIN TRANSACTION | Starts a transaction | BEGIN TRANSACTION |
+| COMMIT | Commits changes | COMMIT |
+| ROLLBACK | Discards changes | ROLLBACK |
+
+### WHERE Clause and Operators
+
+The system supports various operators in WHERE clauses:
+
+#### Comparison Operators
+- `=` (equals)
+- `!=` or `<>` (not equals)
+- `<` (less than)
+- `>` (greater than)
+- `<=` (less than or equal)
+- `>=` (greater than or equal)
+
+#### Logical Operators
+- `AND`: Returns true when both conditions are true
+- `OR`: Returns true when either condition is true
+
+#### Examples with Logical Operators
+
 ```sql
--- Create a new database
-CREATE DATABASE school;
+-- Single condition
+SELECT * FROM students WHERE age > 20
 
--- Switch to the database
-USE school;
+-- AND operator
+SELECT * FROM students WHERE age > 20 AND department = 'Engineering'
 
--- List all databases
-.databases
+-- OR operator
+SELECT * FROM students WHERE age < 20 OR department = 'Art'
 
--- Exit the current database (return to main prompt)
-EXIT;
-
--- Delete a database
-DROP DATABASE school;
+-- Combined operators
+SELECT * FROM students WHERE (age > 20 AND department = 'Engineering') OR name = 'John'
 ```
 
-### Table Operations
+### Special Commands
+
+| Command | Description |
+|---------|-------------|
+| .help | Displays help |
+| .databases | Lists all databases |
+| .tables | Lists tables in the current database |
+| .flush | Flushes data to disk |
+| .exit | Exits the program |
+
+## Constraints
+
+The following constraints can be applied to columns:
+
+- **PRIMARY KEY**: Unique identifier for a row
+- **UNIQUE**: Ensures all values in a column are unique
+- **NOT NULL**: Prevents NULL/empty values
+
+Example:
 ```sql
--- Create a table with various data types and constraints
-CREATE TABLE students (
+CREATE TABLE employees (
     id INT PRIMARY KEY,
+    email STRING UNIQUE,
     name STRING NOT NULL,
-    age INT,
-    enrollment_date DATE,
-    tuition_fee BIGINT
-);
-
--- Show all tables in current database
-SHOW TABLES;
-
--- View table structure
-DESC students;
-
--- Add a column to an existing table
-ALTER TABLE students ADD email STRING UNIQUE;
-
--- Remove a column
-ALTER TABLE students DROP email;
-
--- Delete a table
-DROP TABLE students;
+    department STRING
+)
 ```
 
-### Data Operations
+## Advanced Features
+
+### B-Tree Indexing
+
+The system uses B-Tree indexing for efficient data retrieval with logarithmic time complexity, supporting:
+- Automatic indexing of PRIMARY KEY columns
+- Efficient point queries
+- Range queries with optimized performance
+
+### Buffer Pool Management
+
+An LRU-based buffer pool caches database pages in memory, providing:
+- Reduced disk I/O
+- Efficient page replacement
+- Dirty page tracking
+
+### ACID Transactions
+
+Transaction support with ACID properties:
+- **Atomicity**: All operations succeed or all fail
+- **Consistency**: Data remains in a valid state
+- **Isolation**: Transactions don't interfere with each other
+- **Durability**: Committed changes persist
+
+Example transaction:
 ```sql
--- Insert data
-INSERT INTO students (id, name, age, enrollment_date, tuition_fee) 
-VALUES (1, 'John Smith', 20, '2023-09-15', 125000);
-
--- Insert multiple records (run as separate commands)
-INSERT INTO students (id, name, age, enrollment_date, tuition_fee) 
-VALUES (2, 'Jane Doe', 22, '2023-08-10', 125000);
-
--- Query data
-SELECT * FROM students;
-SELECT name, age FROM students;
-SELECT * FROM students WHERE age > 21;
-SELECT * FROM students WHERE name = 'John Smith';
-
--- Update data
-UPDATE students SET age = 21 WHERE id = 1;
-
--- Delete data
-DELETE FROM students WHERE id = 2;
+BEGIN TRANSACTION
+INSERT INTO employees (id, name, department) VALUES (1, 'John Doe', 'Engineering')
+UPDATE departments SET employee_count = employee_count + 1 WHERE name = 'Engineering'
+COMMIT
 ```
-
-### Advanced Queries with Logical Operators
-```sql
--- Combine conditions with AND
-SELECT * FROM students WHERE age > 20 AND tuition_fee = 125000;
-
--- Combine conditions with OR
-SELECT * FROM students WHERE age < 20 OR enrollment_date > '2023-09-01';
-
--- Complex conditions with both AND and OR
-SELECT * FROM students WHERE (age > 21 AND tuition_fee < 150000) OR name = 'John Smith';
-
--- Using comparison operators
-SELECT * FROM students WHERE enrollment_date < '2023-09-01';
-```
-
-## Implementation Details
-
-- Databases are stored as directories with a "data" subdirectory
-- Tables are stored as pairs of files: .meta (schema) and .data (records)
-- Commands are parsed using regex patterns for flexibility
-- Cross-platform path handling for Windows and Unix systems
-- Logical operators are implemented with a linked condition structure
 
 ## Project Structure
 
 ```
 ├── CMakeLists.txt          # Build configuration
-├── README.md               # Project documentation
-├── DOCUMENTATION.md        # Detailed technical documentation
-├── databases/              # Data storage directory (created at runtime)
 ├── include/                # Header files
-│   ├── AggregateFunction.h # Aggregate functions (COUNT, SUM, etc.)
 │   ├── Column.h            # Column class
 │   ├── DataType.h          # Data type definitions
 │   ├── DatabaseManager.h   # Database manager
 │   ├── DatabaseSystem.h    # Database system
 │   ├── QueryParser.h       # SQL query parser
-│   ├── StringFunction.h    # String functions (UPPER, LOWER, etc.)
 │   ├── Table.h             # Table class
 │   └── storage_engine/     # Storage engine components
-│       ├── StorageEngine.h # Main storage engine class
-│       ├── BufferPoolManager.h # Buffer pool manager
-│       ├── BTreeIndex.h    # B-Tree index
-│       ├── TransactionManager.h # Transaction manager
-│       └── Value.h         # Value representation
+│       ├── StorageEngine.h
+│       ├── BufferPoolManager.h
+│       ├── BTreeIndex.h
+│       └── TransactionManager.h
 └── src/                    # Source files
-    ├── main.cpp            # Main application entry point
-    ├── storage_engine_test.cpp # Storage engine tests
-    ├── storage_engine_performance_test.cpp # Performance tests
+    ├── main.cpp            # Application entry point
     └── storage_engine/     # Storage engine implementations
+        ├── StorageEngine.cpp
+        ├── BufferPoolManager.cpp
+        ├── BTreeIndex.cpp
+        └── TransactionManager.cpp
 ```
 
 ## Troubleshooting
 
-1. **Permission Errors**: If you encounter permission errors when creating databases, ensure you have write permissions in the directory.
+1. **Permission Errors**: Ensure you have write permissions in the directory where the program is running.
 
-2. **Database Not Found**: Make sure you create a database before trying to use it with the `USE` command.
+2. **Database Not Found**: Make sure you've created a database with `CREATE DATABASE` before trying to use it.
 
-3. **Invalid Command**: All SQL commands must end with a semicolon (;). Special dot commands like `.help` do not require a semicolon.
+3. **Command Syntax**: Remember that commands should NOT end with semicolons.
 
-4. **Syntax Errors**: Make sure your SQL commands follow the correct syntax as shown in the examples.
+4. **Logical Operator Issues**: When using complex conditions with multiple AND/OR operators, use parentheses to explicitly group conditions.
 
-5. **Logical Operator Issues**: When using complex conditions with multiple AND/OR operators, use parentheses to explicitly group conditions if the default precedence doesn't match your intent.
+5. **Build Issues**: Ensure you have a C++17 compatible compiler and all necessary development tools installed.
 
-## See Also
+## License
 
-For more detailed information about the implementation and architecture, please see the [DOCUMENTATION.md](DOCUMENTATION.md) file. 
+This project is available under the MIT License. See the LICENSE file for more details.
 
-## Future Development: Advanced Storage Engine
+## Detailed Documentation
 
-The next phase of this project will focus on implementing a proper storage engine with the following features:
-
-1. **B-Tree Index Implementation**
-   - Efficient data retrieval with logarithmic time complexity
-   - Support for range queries
-   - Optimized for disk I/O operations
-
-2. **Buffer Pool Management**
-   - In-memory caching of frequently accessed data
-   - LRU (Least Recently Used) replacement policy
-   - Configurable buffer pool size
-
-3. **Transaction Support**
-   - ACID compliance (Atomicity, Consistency, Isolation, Durability)
-   - Write-ahead logging (WAL)
-   - Concurrency control with locking mechanisms
-
-4. **Query Optimization**
-   - Cost-based query optimization
-   - Statistics collection for better query planning
-   - Join optimization strategies
-
-5. **Performance Benchmarking**
-   - Comparison with existing database systems
-   - Metrics for throughput, latency, and resource utilization
-   - Stress testing under various workloads
-
-This enhanced version will build upon the foundation of our college project while significantly improving performance, reliability, and feature set. 
+For comprehensive documentation including implementation details, architectural decisions, and internal workings, refer to the [help.md](help.md) file included in this repository. 
