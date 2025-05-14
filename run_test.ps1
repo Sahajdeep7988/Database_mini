@@ -39,4 +39,14 @@ $output = Get-Content -Path $commandsFile | ForEach-Object {
 # Write output to file
 $output | Out-File -FilePath "test_output.txt"
 
-Write-Host "Test completed. Check test_output.txt for results." 
+Write-Host "Test completed. Check test_output.txt for results."
+
+Write-Host "Compiling database system..." -ForegroundColor Green
+g++ -std=c++17 src/main.cpp -o simple_db.exe -I include/
+
+Write-Host ""
+Write-Host "Running simple test..." -ForegroundColor Cyan
+Get-Content simple_test.sql | .\simple_db.exe
+
+Write-Host ""
+Write-Host "Test completed!" -ForegroundColor Green 
