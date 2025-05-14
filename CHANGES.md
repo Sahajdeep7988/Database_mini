@@ -69,25 +69,26 @@ Added clear documentation about the no-semicolons rule.
 - Removed temporary test files
 - Removed redundant old performance testing scripts 
 
-## 6. Added Support for SQL-like Semicolon Syntax
+## 6. Reinforced No-Semicolon Syntax Requirement
 
-Added support for standard SQL syntax with semicolons at the end of commands.
+Reinforced the requirement that SQL commands must NOT end with semicolons.
 
 ### Changes:
 
 - **main.cpp - Input Processing**
-  - Modified to preserve semicolons in input
-  - Created separate processing input that removes semicolons for internal handling
-  - Removed warning messages about semicolons in transaction commands
+  - Modified to explicitly warn and reject inputs with trailing semicolons
+  - Added clearer error messages when semicolons are detected in any commands
+  - Ensured consistent behavior across all command types
 
 - **main.cpp - Command Detection Methods**
-  - Updated isTableCommand() and isDatabaseCommand() to handle semicolons
-  - Added code to strip semicolons before pattern matching
+  - Updated isTableCommand() and isDatabaseCommand() to better handle inputs
+  - Added clearer validation for command syntax
 
-- **QueryParser.h - parseTransaction method**
-  - Updated to handle and remove trailing semicolons
+- **QueryParser.h - parseQuery method**
+  - Added explicit semicolon detection and rejection
+  - Improved error messages to guide users
 
-- **USAGE_NOTES.md**
-  - Completely rewrote the syntax section to indicate that semicolons are now supported
-  - Updated examples to show standard SQL syntax with semicolons
-  - Noted that commands without semicolons are still supported for backward compatibility 
+- **USAGE_NOTES.md and DOCUMENTATION.md**
+  - Reinforced the syntax requirements to specify NO semicolons
+  - Updated examples to show the correct syntax without semicolons
+  - Added troubleshooting tips for semicolon-related issues 

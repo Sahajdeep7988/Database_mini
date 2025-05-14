@@ -282,7 +282,8 @@ COMMIT
 │       ├── StorageEngine.h
 │       ├── BufferPoolManager.h
 │       ├── BTreeIndex.h
-│       └── TransactionManager.h
+│       ├── TransactionManager.h
+│       └── Value.h         # Value representation
 └── src/                    # Source files
     ├── main.cpp            # Application entry point
     └── storage_engine/     # Storage engine implementations

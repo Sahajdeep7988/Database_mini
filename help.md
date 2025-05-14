@@ -41,7 +41,14 @@ The project structure follows a logical hierarchy:
 ├── CMakeLists.txt          # Build configuration
 ├── README.md               # Project documentation
 ├── src/                    # Source files
-│   └── main.cpp            # Main application entry point
+│   ├── main.cpp            # Main application entry point
+│   ├── storage_engine_test.cpp  # Storage engine test file
+│   ├── storage_engine_performance_test.cpp  # Performance testing
+│   └── storage_engine/     # Storage engine implementations
+│       ├── StorageEngine.cpp
+│       ├── BufferPoolManager.cpp
+│       ├── BTreeIndex.cpp
+│       └── TransactionManager.cpp
 ├── include/                # Header files
 │   ├── AggregateFunction.h # Aggregate functions (COUNT, SUM, etc.)
 │   ├── Column.h            # Column class definition
@@ -50,7 +57,13 @@ The project structure follows a logical hierarchy:
 │   ├── DatabaseSystem.h    # Top-level database system
 │   ├── QueryParser.h       # SQL query parser
 │   ├── StringFunction.h    # String functions (UPPER, LOWER, etc.)
-│   └── Table.h             # Table class definition
+│   ├── Table.h             # Table class definition
+│   └── storage_engine/     # Storage engine components
+│       ├── StorageEngine.h
+│       ├── BufferPoolManager.h
+│       ├── BTreeIndex.h
+│       ├── TransactionManager.h
+│       └── Value.h         # Value representation
 └── databases/              # Data storage directory (created at runtime)
 ```
 
