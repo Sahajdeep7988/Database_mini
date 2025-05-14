@@ -247,24 +247,41 @@ The WHERE clause supports the following operators:
 
 - `=`: Equal to
 - `!=`: Not equal to
+- `<>`: Not equal to (standard SQL syntax)
 - `>`: Greater than
 - `<`: Less than
 - `>=`: Greater than or equal to
 - `<=`: Less than or equal to
 - `AND`: Logical AND
 - `OR`: Logical OR
+- `NOT`: Logical NOT
 
 Examples:
 ```sql
 -- Simple comparison
 WHERE age > 25
 
--- Multiple conditions
+-- Logical operators with proper precedence
 WHERE age > 25 AND salary <= 75000
 
 -- Complex conditions
-WHERE (age > 25 AND salary <= 75000) OR (name = 'John' AND hire_date > '2023-01-01')
+WHERE (age > 25 AND department = 'Sales') OR (experience >= 5 AND status = 'Active')
+
+-- NOT operator
+WHERE NOT (age < 18)
+
+-- NULL checks
+WHERE email IS NULL
+WHERE phone IS NOT NULL
 ```
+
+#### Logical Operator Behavior
+
+- `AND`: Returns true (1) if both operands are non-zero and not NULL, false (0) if one or more operands are 0, otherwise NULL.
+- `OR`: Returns true (1) if any operand is non-zero, false (0) if both are 0, NULL if one operand is NULL and the other is 0.
+- `NOT`: Negates a condition. Returns true (1) if operand is false (0), false (0) if operand is true (non-zero), NOT NULL returns NULL.
+
+Expressions are evaluated according to operator precedence, with AND having higher precedence than OR. Use parentheses to explicitly control evaluation order in complex conditions.
 
 ## Recent Improvements
 

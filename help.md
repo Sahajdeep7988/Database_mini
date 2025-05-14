@@ -1084,47 +1084,114 @@ struct QueryResult {
 WHERE conditions are parsed and represented using a linked structure of Condition objects:
 
 ```cpp
-std::shared_ptr<Condition> parseCondition(const std::string& conditionStr) {
-    // Regular expression to match conditions with logical operators
-    std::regex conditionPattern(R"((.+?)(?:\s+(AND|OR)\s+(.+))?$)", std::regex_constants::icase);
-    std::smatch matches;
+std::unique_ptr<Condition> parseCondition(const std::string& conditionStr) {
+    if (conditionStr.empty()) {
+        return nullptr;
+    }
     
-    if (!std::regex_match(conditionStr, matches, conditionPattern)) {
+    // Check for AND/OR operators - using stricter pattern to avoid false matches
+    // Look for " AND " and " OR " with word boundaries to avoid matching inside column names or values
+    size_t andPos = std::string::npos;
+    size_t orPos = std::string::npos;
+    
+    // Look for case-insensitive " AND " with proper word boundaries
+    std::regex andRegex(R"((?i)\s+AND\s+)");
+    std::smatch andMatch;
+    if (std::regex_search(conditionStr, andMatch, andRegex)) {
+        andPos = andMatch.position();
+    }
+    
+    // Look for case-insensitive " OR " with proper word boundaries
+    std::regex orRegex(R"((?i)\s+OR\s+)");
+    std::smatch orMatch;
+    if (std::regex_search(conditionStr, orMatch, orRegex)) {
+        orPos = orMatch.position();
+    }
+    
+    if (andPos != std::string::npos || orPos != std::string::npos) {
+        bool isAnd = (andPos != std::string::npos && (orPos == std::string::npos || andPos < orPos));
+        size_t opPos = isAnd ? andPos : orPos;
+        std::string logicalOp = isAnd ? "AND" : "OR";
+        size_t opLength = isAnd ? 3 : 2;
+        
+        // Parse the first condition
+        std::string firstConditionStr = trim(conditionStr.substr(0, opPos));
+        auto firstCondition = parseCondition(firstConditionStr);
+        
+        // Find the position after the operator (accounting for whitespace)
+        size_t afterOpPos = conditionStr.find_first_not_of(" \t", opPos + opLength);
+        if (afterOpPos == std::string::npos) {
+            throw std::invalid_argument("Invalid logical operator usage: missing right operand");
+        }
+        
+        // Parse the next condition
+        std::string nextConditionStr = trim(conditionStr.substr(afterOpPos));
+        auto nextCondition = parseCondition(nextConditionStr);
+        
+        // Link the conditions
+        firstCondition->logicalOp = Condition::stringToLogicalOperator(logicalOp);
+        firstCondition->nextCondition = std::move(nextCondition);
+        
+        return firstCondition;
+    }
+    
+    // Parse single condition: column operator value
+    std::regex condPattern(R"((\w+)\s*([=!<>][=]?)\s*([^=!<>]*))", std::regex_constants::icase);
+    std::smatch condMatches;
+    
+    if (!std::regex_search(conditionStr, condMatches, condPattern)) {
         throw std::invalid_argument("Invalid condition: " + conditionStr);
     }
     
-    std::string firstConditionStr = matches[1].str();
-    std::string logicalOpStr = matches[2].matched ? matches[2].str() : "";
-    std::string nextConditionStr = matches[3].matched ? matches[3].str() : "";
-    
-    // Parse the first condition (format: column operator value)
-    std::regex atomicPattern(R"(\s*(\w+)\s*([=!<>]+)\s*([^=!<>]+)\s*)");
-    std::smatch atomicMatches;
-    
-    if (!std::regex_match(firstConditionStr, atomicMatches, atomicPattern)) {
-        throw std::invalid_argument("Invalid atomic condition: " + firstConditionStr);
-    }
-    
-    auto condition = std::make_shared<Condition>();
-    condition->column = trim(atomicMatches[1].str());
-    condition->op = Condition::stringToOperator(atomicMatches[2].str());
-    condition->value = trim(atomicMatches[3].str());
+    std::string columnName = trim(condMatches[1].str());
+    std::string opStr = trim(condMatches[2].str());
+    std::string valueStr = trim(condMatches[3].str());
     
     // Remove quotes from string values
-    if (condition->value.size() >= 2 && 
-        condition->value.front() == '\'' && condition->value.back() == '\'') {
-        condition->value = condition->value.substr(1, condition->value.size() - 2);
+    if (valueStr.size() >= 2 && 
+        (valueStr.front() == '\'' && valueStr.back() == '\'' ||
+         valueStr.front() == '"' && valueStr.back() == '"')) {
+        valueStr = value.substr(1, value.size() - 2);
     }
     
-    // Handle logical operators (AND, OR) for complex conditions
-    if (!logicalOpStr.empty() && !nextConditionStr.empty()) {
-        condition->logicalOp = Condition::stringToLogicalOperator(logicalOpStr);
-        condition->nextCondition = parseCondition(nextConditionStr);
-    }
+    // Create condition
+    auto condition = std::make_unique<Condition>();
+    condition->column = columnName;
+    condition->op = Condition::stringToOperator(opStr);
+    condition->value = valueStr;
     
     return condition;
 }
 ```
+
+#### Logical Operator Evaluation
+
+The system evaluates logical operators in a way that matches standard SQL behavior:
+
+```cpp
+// If there's a next condition, evaluate it recursively
+if (condition.nextCondition) {
+    bool nextResult = evaluateCondition(record, *condition.nextCondition);
+    
+    // Combine with logical operator
+    switch (condition.logicalOp) {
+        case Condition::LogicalOperator::AND:
+            return result && nextResult;
+        case Condition::LogicalOperator::OR:
+            return result || nextResult;
+        default:
+            return result;
+    }
+}
+```
+
+This implementation follows the SQL standard for logical operations:
+- `AND`: Returns true only if both conditions are true
+- `OR`: Returns true if either condition is true
+- Operator precedence ensures that `AND` has higher priority than `OR`
+- Use parentheses to explicitly group conditions
+
+For example, `WHERE a = 1 AND b = 2 OR c = 3` is evaluated as `(a = 1 AND b = 2) OR c = 3` following standard operator precedence.
 
 ### String Utilities
 

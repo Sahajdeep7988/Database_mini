@@ -324,20 +324,43 @@ private:
             return nullptr;
         }
         
-        // Check for AND/OR operators
-        size_t andPos = conditionStr.find(" AND ");
-        size_t orPos = conditionStr.find(" OR ");
+        // Check for AND/OR operators - using stricter pattern to avoid false matches
+        // Look for " AND " and " OR " with word boundaries to avoid matching inside column names or values
+        size_t andPos = std::string::npos;
+        size_t orPos = std::string::npos;
+        
+        // Look for case-insensitive " AND " with proper word boundaries
+        std::regex andRegex(R"((?i)\s+AND\s+)");
+        std::smatch andMatch;
+        if (std::regex_search(conditionStr, andMatch, andRegex)) {
+            andPos = andMatch.position();
+        }
+        
+        // Look for case-insensitive " OR " with proper word boundaries
+        std::regex orRegex(R"((?i)\s+OR\s+)");
+        std::smatch orMatch;
+        if (std::regex_search(conditionStr, orMatch, orRegex)) {
+            orPos = orMatch.position();
+        }
         
         if (andPos != std::string::npos || orPos != std::string::npos) {
-            size_t opPos = (andPos != std::string::npos && (orPos == std::string::npos || andPos < orPos)) ? andPos : orPos;
-            std::string logicalOp = conditionStr.substr(opPos + 1, (opPos == andPos) ? 3 : 2);
+            bool isAnd = (andPos != std::string::npos && (orPos == std::string::npos || andPos < orPos));
+            size_t opPos = isAnd ? andPos : orPos;
+            std::string logicalOp = isAnd ? "AND" : "OR";
+            size_t opLength = isAnd ? 3 : 2;
             
             // Parse the first condition
-            std::string firstConditionStr = conditionStr.substr(0, opPos);
+            std::string firstConditionStr = trim(conditionStr.substr(0, opPos));
             auto firstCondition = parseCondition(firstConditionStr);
             
+            // Find the position after the operator (accounting for whitespace)
+            size_t afterOpPos = conditionStr.find_first_not_of(" \t", opPos + opLength);
+            if (afterOpPos == std::string::npos) {
+                throw std::invalid_argument("Invalid logical operator usage: missing right operand");
+            }
+            
             // Parse the next condition
-            std::string nextConditionStr = conditionStr.substr(opPos + logicalOp.length() + 1);
+            std::string nextConditionStr = trim(conditionStr.substr(afterOpPos));
             auto nextCondition = parseCondition(nextConditionStr);
             
             // Link the conditions

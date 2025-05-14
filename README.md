@@ -35,6 +35,15 @@ Mobile: +91 7988168548
 - **UPDATE tableName SET col1=val1, col2=val2, ... [WHERE conditions]**: Updates data
 - **DELETE FROM tableName [WHERE conditions]**: Deletes data
 
+### WHERE Clause and Logical Operators
+- **Comparison operators**: `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`
+- **Logical operators**: 
+  - `AND`: Returns true when both conditions are true
+  - `OR`: Returns true when either condition is true
+  - `NOT`: Negates a condition
+- **NULL checks**: `IS NULL`, `IS NOT NULL`
+- **Value checks**: `IN`, `BETWEEN`, `LIKE`
+
 ### Constraints
 - **PRIMARY KEY**: Unique identifier for a row
 - **UNIQUE**: Values must be unique
@@ -204,4 +213,35 @@ SELECT * FROM students WHERE enrollment_date < '2023-09-01';
 
 ## See Also
 
-For more detailed information about the implementation and architecture, please see the [DOCUMENTATION.md](DOCUMENTATION.md) file. 
+For more detailed information about the implementation and architecture, please see the [DOCUMENTATION.md](DOCUMENTATION.md) file.
+
+## Future Development: Advanced Storage Engine
+
+The next phase of this project will focus on implementing a proper storage engine with the following features:
+
+1. **B-Tree Index Implementation**
+   - Efficient data retrieval with logarithmic time complexity
+   - Support for range queries
+   - Optimized for disk I/O operations
+
+2. **Buffer Pool Management**
+   - In-memory caching of frequently accessed data
+   - LRU (Least Recently Used) replacement policy
+   - Configurable buffer pool size
+
+3. **Transaction Support**
+   - ACID compliance (Atomicity, Consistency, Isolation, Durability)
+   - Write-ahead logging (WAL)
+   - Concurrency control with locking mechanisms
+
+4. **Query Optimization**
+   - Cost-based query optimization
+   - Statistics collection for better query planning
+   - Join optimization strategies
+
+5. **Performance Benchmarking**
+   - Comparison with existing database systems
+   - Metrics for throughput, latency, and resource utilization
+   - Stress testing under various workloads
+
+This enhanced version will build upon the foundation of our college project while significantly improving performance, reliability, and feature set. 

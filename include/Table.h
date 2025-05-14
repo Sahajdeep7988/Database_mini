@@ -54,7 +54,14 @@ struct Condition {
 
     // Convert string to logical operator
     static LogicalOperator stringToLogicalOperator(const std::string& opStr) {
+        // Create a copy of the string to transform
         std::string upperOpStr = opStr;
+        
+        // Trim whitespace first
+        upperOpStr.erase(0, upperOpStr.find_first_not_of(" \t\n\r"));
+        upperOpStr.erase(upperOpStr.find_last_not_of(" \t\n\r") + 1);
+        
+        // Convert to uppercase for case-insensitive comparison
         std::transform(upperOpStr.begin(), upperOpStr.end(), upperOpStr.begin(), 
                       [](unsigned char c){ return std::toupper(c); });
         
