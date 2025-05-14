@@ -555,11 +555,6 @@ private:
         // Convert to uppercase and trim for case-insensitive comparison
         std::string upperQuery = toUpper(trim(query));
         
-        // Remove trailing semicolon if present
-        if (!upperQuery.empty() && upperQuery.back() == ';') {
-            upperQuery.pop_back();
-        }
-        
         // BEGIN TRANSACTION or BEGIN
         if (upperQuery == "BEGIN TRANSACTION" || upperQuery == "BEGIN") {
             if (inTransaction) {

@@ -4,31 +4,25 @@
 
 ### SQL Command Syntax
 
-This system supports standard SQL syntax, including the use of semicolons at the end of commands. You can write queries just like in standard SQL:
-
-- Transaction commands (BEGIN TRANSACTION; COMMIT; ROLLBACK;)
-- Database commands (CREATE DATABASE dbname; USE dbname;)
-- Table operations (CREATE TABLE...; INSERT INTO...; SELECT...;)
+This system uses a SQL-like syntax but with an important difference: commands should NOT end with semicolons. Adding semicolons at the end of commands will result in syntax errors.
 
 **Examples:**
 ```
-CREATE DATABASE testdb;
-USE testdb;
-CREATE TABLE users (id INT PRIMARY KEY, name STRING);
-BEGIN TRANSACTION;
-INSERT INTO users (id, name) VALUES (1, 'User1');
-COMMIT;
+CREATE DATABASE testdb
+USE testdb
+CREATE TABLE users (id INT PRIMARY KEY, name STRING)
+BEGIN TRANSACTION
+INSERT INTO users (id, name) VALUES (1, 'User1')
+COMMIT
 ```
-
-For backward compatibility, commands without semicolons are also supported.
 
 ### Transaction Support
 
 The system supports full ACID-compliant transactions:
 
-1. **BEGIN TRANSACTION;** (or simply **BEGIN;**): Start a new transaction
-2. **COMMIT;**: Save all changes made in the current transaction 
-3. **ROLLBACK;**: Discard all changes made in the current transaction
+1. **BEGIN TRANSACTION** (or simply **BEGIN**): Start a new transaction
+2. **COMMIT**: Save all changes made in the current transaction 
+3. **ROLLBACK**: Discard all changes made in the current transaction
 
 When a transaction is active, the prompt will show "(TRANSACTION)" to indicate this state.
 
@@ -53,33 +47,34 @@ The system uses a B-Tree based storage engine with the following features:
 
 If you encounter issues with commands not being recognized:
 
-1. Check that you are connected to a database (use the `USE dbname;` command)
-2. Verify command spelling and capitalization (though commands are case-insensitive)
-3. If a transaction fails, use `ROLLBACK;` to reset the transaction state
+1. Make sure you haven't included semicolons at the end of your commands
+2. Check that you are connected to a database (use the `USE dbname` command)
+3. Verify command spelling and capitalization (though commands are case-insensitive)
+4. If a transaction fails, use `ROLLBACK` to reset the transaction state
 
 ## Example Session
 
 ```
-> CREATE DATABASE testdb;
+> CREATE DATABASE testdb
 Creating database 'testdb'...
 Database 'testdb' created successfully.
 
-> USE testdb;
+> USE testdb
 Using database 'testdb'.
 
-testdb> CREATE TABLE users (id INT PRIMARY KEY, name STRING);
+testdb> CREATE TABLE users (id INT PRIMARY KEY, name STRING)
 Table 'users' created successfully
 
-testdb> BEGIN TRANSACTION;
+testdb> BEGIN TRANSACTION
 Transaction started
 
-testdb (TRANSACTION)> INSERT INTO users (id, name) VALUES (1, 'User1');
+testdb (TRANSACTION)> INSERT INTO users (id, name) VALUES (1, 'User1')
 Record inserted successfully
 
-testdb (TRANSACTION)> COMMIT;
+testdb (TRANSACTION)> COMMIT
 Transaction committed
 
-testdb> SELECT * FROM users;
+testdb> SELECT * FROM users
     | id       | name      |
     +----------+-----------+
     | 1        | User1     |
@@ -89,7 +84,7 @@ testdb> SELECT * FROM users;
 testdb> .flush
 Data flushed to disk successfully
 
-testdb> EXIT;
+testdb> EXIT
 Exited database 'testdb'.
 
 > .exit

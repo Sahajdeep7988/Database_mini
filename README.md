@@ -19,7 +19,30 @@ This C++ database system provides SQL-like functionality with the following feat
 - B-Tree indexing
 - Buffer pool management
 - File-based persistence
-- Cross-platform compatibility
+
+> **⚠️ IMPORTANT:** Unlike standard SQL, commands in this system should NOT end with semicolons.  
+> Adding semicolons will result in syntax errors.
+
+## Features
+
+### Data Types
+- **INT**: Integer values
+- **BIGINT**: Large integer values
+- **STRING**: Text values
+- **DATE**: Date values in YYYY-MM-DD format
+
+### Database Operations
+- Create, use, and drop databases
+- Create, alter, and drop tables
+- Insert, update, delete, and select data
+- Transaction support (BEGIN/COMMIT/ROLLBACK)
+
+### Special Features
+- Case-insensitive commands
+- Persistent data storage
+- Constraint validation (PRIMARY KEY, UNIQUE, NOT NULL)
+- Transaction support for atomicity and consistency
+- Advanced WHERE clause conditions with logical operators
 
 ## Installation
 

@@ -72,6 +72,9 @@ void printHelp() {
     std::cout << "====================================================" << std::endl;
     std::cout << "  Simple SQL-like Database System" << std::endl;
     std::cout << "====================================================" << std::endl;
+    std::cout << "IMPORTANT: DO NOT use semicolons at the end of commands!" << std::endl;
+    std::cout << "They will result in syntax errors." << std::endl;
+    std::cout << std::endl;
     std::cout << "Database commands:" << std::endl;
     std::cout << "  CREATE DATABASE dbName" << std::endl;
     std::cout << "  DROP DATABASE dbName" << std::endl;
@@ -413,11 +416,7 @@ int main() {
         // Get user input
         std::getline(std::cin, input);
         
-        // Check for semicolons in transaction commands
-        std::string original_input = input;
-        bool has_semicolon = (input.find(';') != std::string::npos);
-        
-        // Trim input (preserve semicolons)
+        // Trim input
         input.erase(0, input.find_first_not_of(" \t\r\n"));
         
         // Remove only trailing whitespace, keeping semicolons
@@ -433,10 +432,10 @@ int main() {
             continue;
         }
         
-        // Remove trailing semicolon for processing (we'll handle it specially)
-        std::string processedInput = input;
-        if (!processedInput.empty() && processedInput.back() == ';') {
-            processedInput.pop_back();
+        // Check for semicolons and reject if found (except in special dot commands)
+        if (input[0] != '.' && input.find(';') != std::string::npos) {
+            std::cout << "Error: Semicolons are not allowed in commands. Please remove all semicolons." << std::endl;
+            continue;
         }
         
         // Handle special commands (starting with a dot)
@@ -485,7 +484,7 @@ int main() {
         
         // Check if this is a database-level command
         if (isDatabaseCommand(input)) {
-            processDatabaseCommand(dbSystem, processedInput);
+            processDatabaseCommand(dbSystem, input);
             
             // Update query parser if database changed
             if (!dbSystem.getCurrentDatabaseName().empty()) {
@@ -521,7 +520,7 @@ int main() {
             }
             
             // Execute the query, using the processed input without semicolon
-            auto result = queryParser->parseQuery(processedInput);
+            auto result = queryParser->parseQuery(input);
                     displayResults(result);
             
             continue;

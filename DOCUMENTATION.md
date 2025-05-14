@@ -182,20 +182,22 @@ Parses and executes SQL-like queries.
 
 ## SQL Command Syntax
 
+> **⚠️ IMPORTANT:** SQL commands in this system should NOT end with semicolons. If a command includes a semicolon, it will result in a syntax error.
+
 ### Database Operations
 
 ```sql
 -- Create a new database
-CREATE DATABASE dbName;
+CREATE DATABASE dbName
 
 -- Drop a database
-DROP DATABASE dbName;
+DROP DATABASE dbName
 
 -- Use a database
-USE dbName;
+USE dbName
 
 -- Exit current database
-EXIT;
+EXIT
 ```
 
 ### Table Operations
@@ -206,39 +208,39 @@ CREATE TABLE tableName (
     column1 TYPE1 [PRIMARY KEY] [UNIQUE] [NOT NULL],
     column2 TYPE2 [CONSTRAINTS],
     ...
-);
+)
 
 -- Drop a table
-DROP TABLE tableName;
+DROP TABLE tableName
 
 -- Add a column
-ALTER TABLE tableName ADD columnName TYPE [CONSTRAINTS];
+ALTER TABLE tableName ADD columnName TYPE [CONSTRAINTS]
 
 -- Drop a column
-ALTER TABLE tableName DROP columnName;
+ALTER TABLE tableName DROP columnName
 
 -- Show table schema
-DESC tableName;
+DESC tableName
 
 -- Show all tables
-SHOW TABLES;
+SHOW TABLES
 ```
 
 ### Data Operations
 
 ```sql
 -- Insert data
-INSERT INTO tableName (column1, column2, ...) VALUES (value1, value2, ...);
+INSERT INTO tableName (column1, column2, ...) VALUES (value1, value2, ...)
 
 -- Select data
-SELECT column1, column2, ... FROM tableName [WHERE conditions];
-SELECT * FROM tableName [WHERE conditions];
+SELECT column1, column2, ... FROM tableName [WHERE conditions]
+SELECT * FROM tableName [WHERE conditions]
 
 -- Update data
-UPDATE tableName SET column1=value1, column2=value2, ... [WHERE conditions];
+UPDATE tableName SET column1=value1, column2=value2, ... [WHERE conditions]
 
 -- Delete data
-DELETE FROM tableName [WHERE conditions];
+DELETE FROM tableName [WHERE conditions]
 ```
 
 ### WHERE Clause Syntax
@@ -295,6 +297,7 @@ The system has recently been enhanced with:
    - Fixed directory creation/deletion on all platforms
    - Better error handling for file operations
 5. **Robustness**: Added additional validation and error handling
+6. **No Semicolons**: Updated to reject commands containing semicolons to improve syntax consistency
 
 ## Limitations and Future Work
 
@@ -317,15 +320,19 @@ Potential future enhancements:
 
 ### Common Issues
 
-1. **Permission Errors**:
+1. **Syntax Errors with Semicolons**:
+   - Cause: Using semicolons at the end of commands
+   - Solution: Remove all semicolons from commands
+
+2. **Permission Errors**:
    - Cause: Insufficient permissions to create/write files
    - Solution: Run the application with appropriate permissions or change the target directory
 
-2. **Path Issues**:
+3. **Path Issues**:
    - Cause: Invalid or inaccessible paths
    - Solution: Ensure paths are valid and accessible
 
-3. **Data Validation Errors**:
+4. **Data Validation Errors**:
    - Cause: Data violates constraints (primary key, unique, not null)
    - Solution: Ensure data complies with table constraints
 
