@@ -90,6 +90,11 @@ void printHelp() {
     std::cout << "  DESC tableName" << std::endl;
     std::cout << "  SHOW TABLES" << std::endl;
     std::cout << std::endl;
+    std::cout << "Transaction commands:" << std::endl;
+    std::cout << "  BEGIN TRANSACTION (or BEGIN)" << std::endl;
+    std::cout << "  COMMIT" << std::endl;
+    std::cout << "  ROLLBACK" << std::endl;
+    std::cout << std::endl;
     std::cout << "Available data types: INT, BIGINT, STRING, DATE" << std::endl;
     std::cout << "Available constraints: PRIMARY KEY, UNIQUE, NOT NULL" << std::endl;
     std::cout << std::endl;
@@ -97,6 +102,7 @@ void printHelp() {
     std::cout << "  .help       - Display this help message" << std::endl;
     std::cout << "  .databases  - List all databases" << std::endl;
     std::cout << "  .tables     - List all tables in the current database" << std::endl;
+    std::cout << "  .flush      - Flush all data to disk" << std::endl;
     std::cout << "  .exit       - Exit the program" << std::endl;
     std::cout << "====================================================" << std::endl;
 }
@@ -270,6 +276,12 @@ bool exitDatabase(DatabaseSystem& dbSystem) {
 
 // Check if command is a table command that requires database selection
 bool isTableCommand(const std::string& query) {
+    // Clean query by removing trailing semicolon for pattern matching
+    std::string cleanQuery = query;
+    if (!cleanQuery.empty() && cleanQuery.back() == ';') {
+        cleanQuery.pop_back();
+    }
+    
     std::regex createTablePattern(R"(CREATE\s+TABLE)", std::regex_constants::icase);
     std::regex dropTablePattern(R"(DROP\s+TABLE)", std::regex_constants::icase);
     std::regex alterTablePattern(R"(ALTER\s+TABLE)", std::regex_constants::icase);
@@ -279,29 +291,41 @@ bool isTableCommand(const std::string& query) {
     std::regex deletePattern(R"(DELETE\s+FROM)", std::regex_constants::icase);
     std::regex descPattern(R"(DESC\s+\w+)", std::regex_constants::icase);
     std::regex showTablesPattern(R"(SHOW\s+TABLES)", std::regex_constants::icase);
+    std::regex beginPattern(R"(^BEGIN(\s+TRANSACTION)?$)", std::regex_constants::icase);
+    std::regex commitPattern(R"(^COMMIT$)", std::regex_constants::icase);
+    std::regex rollbackPattern(R"(^ROLLBACK$)", std::regex_constants::icase);
     
-    return std::regex_search(query, createTablePattern) ||
-           std::regex_search(query, dropTablePattern) ||
-           std::regex_search(query, alterTablePattern) ||
-           std::regex_search(query, insertPattern) ||
-           std::regex_search(query, selectPattern) ||
-           std::regex_search(query, updatePattern) ||
-           std::regex_search(query, deletePattern) ||
-           std::regex_search(query, descPattern) ||
-           std::regex_search(query, showTablesPattern);
+    return std::regex_search(cleanQuery, createTablePattern) ||
+           std::regex_search(cleanQuery, dropTablePattern) ||
+           std::regex_search(cleanQuery, alterTablePattern) ||
+           std::regex_search(cleanQuery, insertPattern) ||
+           std::regex_search(cleanQuery, selectPattern) ||
+           std::regex_search(cleanQuery, updatePattern) ||
+           std::regex_search(cleanQuery, deletePattern) ||
+           std::regex_search(cleanQuery, descPattern) ||
+           std::regex_search(cleanQuery, showTablesPattern) ||
+           std::regex_match(cleanQuery, beginPattern) ||
+           std::regex_match(cleanQuery, commitPattern) ||
+           std::regex_match(cleanQuery, rollbackPattern);
 }
 
 // Check if command is a database command
 bool isDatabaseCommand(const std::string& query) {
+    // Clean query by removing trailing semicolon for pattern matching
+    std::string cleanQuery = query;
+    if (!cleanQuery.empty() && cleanQuery.back() == ';') {
+        cleanQuery.pop_back();
+    }
+    
     std::regex createDbPattern(R"(CREATE\s+DATABASE\s+\w+)", std::regex_constants::icase);
     std::regex dropDbPattern(R"(DROP\s+DATABASE\s+\w+)", std::regex_constants::icase);
     std::regex useDbPattern(R"(USE\s+\w+)", std::regex_constants::icase);
     std::regex exitPattern(R"(EXIT)", std::regex_constants::icase);
     
-    return std::regex_match(query, createDbPattern) ||
-           std::regex_match(query, dropDbPattern) ||
-           std::regex_match(query, useDbPattern) ||
-           std::regex_match(query, exitPattern);
+    return std::regex_match(cleanQuery, createDbPattern) ||
+           std::regex_match(cleanQuery, dropDbPattern) ||
+           std::regex_match(cleanQuery, useDbPattern) ||
+           std::regex_match(cleanQuery, exitPattern);
 }
 
 // Process database commands
@@ -357,102 +381,159 @@ bool processDatabaseCommand(DatabaseSystem& dbSystem, const std::string& query) 
 }
 
 int main() {
-    // Create the database system
+    // Initialize database system
     DatabaseSystem dbSystem;
     
     // Print welcome message
-    printHelp();
+    std::cout << "Welcome to the SQL-like Database System" << std::endl;
+    std::cout << "Type '.help' for usage information or '.exit' to quit" << std::endl;
     
     // Main command loop
-    std::string line;
-    std::string query;
-    bool multiline = false;
+    std::string input;
+    bool exit = false;
     
-    std::cout << std::endl << "Enter a SQL command (or .help, .databases, .tables, .exit):" << std::endl;
+    // Keep track of the current query parser (one per database)
+    std::unique_ptr<QueryParser> queryParser;
     
-    while (true) {
-        // Print prompt with current database
-        if (!multiline) {
+    while (!exit) {
+        // Show prompt
             if (dbSystem.getCurrentDatabaseName().empty()) {
-                std::cout << "sql> ";
+            std::cout << "> ";
             } else {
-                std::cout << dbSystem.getCurrentDatabaseName() << "> ";
+            std::cout << dbSystem.getCurrentDatabaseName();
+            
+            // Show transaction status
+            if (queryParser && queryParser->isInTransaction()) {
+                std::cout << " (TRANSACTION)";
             }
-        } else {
-            std::cout << "...> ";
+            
+            std::cout << "> ";
         }
         
-        // Get line of input
-        std::getline(std::cin, line);
+        // Get user input
+        std::getline(std::cin, input);
         
-        // Check for special commands (only in single-line mode)
-        if (!multiline) {
-            // Convert the line to lowercase for case-insensitive comparison
-            std::string lineLower = line;
-            std::transform(lineLower.begin(), lineLower.end(), lineLower.begin(), 
+        // Check for semicolons in transaction commands
+        std::string original_input = input;
+        bool has_semicolon = (input.find(';') != std::string::npos);
+        
+        // Trim input (preserve semicolons)
+        input.erase(0, input.find_first_not_of(" \t\r\n"));
+        
+        // Remove only trailing whitespace, keeping semicolons
+        if (!input.empty()) {
+            size_t end = input.find_last_not_of(" \t\r\n");
+            if (end != std::string::npos) {
+                input.erase(end + 1);
+            }
+        }
+        
+        // Skip empty input
+        if (input.empty()) {
+            continue;
+        }
+        
+        // Remove trailing semicolon for processing (we'll handle it specially)
+        std::string processedInput = input;
+        if (!processedInput.empty() && processedInput.back() == ';') {
+            processedInput.pop_back();
+        }
+        
+        // Handle special commands (starting with a dot)
+        if (input[0] == '.') {
+            std::string command = input.substr(1);
+            std::transform(command.begin(), command.end(), command.begin(), 
                 [](unsigned char c) { return std::tolower(c); });
                 
-            if (lineLower == ".exit") {
-                break;
-            } else if (lineLower == ".help") {
+            if (command == "exit" || command == "quit") {
+                exit = true;
+            } else if (command == "help") {
                 printHelp();
-                continue;
-            } else if (lineLower == ".databases") {
+            } else if (command == "databases") {
                 listDatabases(dbSystem);
-                continue;
-            } else if (lineLower == ".tables") {
+            } else if (command == "tables") {
                 listTables(dbSystem);
+            } else if (command == "flush") {
+                if (queryParser) {
+                    auto result = queryParser->flushData();
+                    std::cout << result.message << std::endl;
+                } else {
+                    std::cout << "Error: No database selected. Use 'USE dbName' first." << std::endl;
+                }
+            } else {
+                std::cout << "Unknown command: " << command << std::endl;
+            }
+            
+            continue;
+        }
+        
+        // Handle "DESC tableName" command
+        std::regex descPattern(R"(^\s*DESC\s+(\w+)\s*$)", std::regex_constants::icase);
+        std::smatch descMatches;
+        if (std::regex_search(input, descMatches, descPattern)) {
+            std::string tableName = descMatches[1].str();
+            showTableSchema(dbSystem, tableName);
+            continue;
+        }
+        
+        // Handle "SHOW TABLES" command
+        std::regex showTablesPattern(R"(^\s*SHOW\s+TABLES\s*$)", std::regex_constants::icase);
+        if (std::regex_search(input, showTablesPattern)) {
+            listTables(dbSystem);
+            continue;
+        }
+        
+        // Check if this is a database-level command
+        if (isDatabaseCommand(input)) {
+            processDatabaseCommand(dbSystem, processedInput);
+            
+            // Update query parser if database changed
+            if (!dbSystem.getCurrentDatabaseName().empty()) {
+                DatabaseManager* dbManager = dbSystem.getCurrentDatabaseManager();
+                if (dbManager) {
+                    queryParser = std::make_unique<QueryParser>(*dbManager);
+                }
+                } else {
+                queryParser.reset();
+            }
+            
+            continue;
+        }
+        
+        // Check if this is a table-level command
+        if (isTableCommand(input)) {
+            // Ensure a database is selected
+            if (dbSystem.getCurrentDatabaseName().empty()) {
+                std::cout << "Error: No database selected. Use 'USE dbName' first." << std::endl;
                 continue;
             }
-        }
-        
-        // Add line to query
-        query += line;
-        
-        // Check if query is complete (ends with semicolon)
-        if (!query.empty() && query.back() == ';') {
-            // Remove semicolon
-            query.pop_back();
             
-            // Process the command
-            bool commandHandled = false;
+            // Get the current database manager
+            DatabaseManager* dbManager = dbSystem.getCurrentDatabaseManager();
+            if (!dbManager) {
+                std::cout << "Error: Failed to access database." << std::endl;
+                continue;
+            }
             
-            // First check if it's a database command
-            commandHandled = processDatabaseCommand(dbSystem, query);
+            // Create query parser if it doesn't exist
+            if (!queryParser) {
+                queryParser = std::make_unique<QueryParser>(*dbManager);
+            }
             
-            // If it's not a database command, check if it's a table command
-            if (!commandHandled && isTableCommand(query)) {
-                // Table commands require a database to be selected
-                DatabaseManager* dbManager = dbSystem.getCurrentDatabaseManager();
-                if (!dbManager) {
-                    std::cout << "Error: No database selected. Use 'USE dbName' first." << std::endl;
-                    commandHandled = true; // Mark as handled to avoid unknown command error
-                } else {
-                    // Create query parser for the current database
-                    QueryParser queryParser(*dbManager);
-                    
-                    // Parse and execute query
-                    QueryResult result = queryParser.parseQuery(query);
-                    
-                    // Display results
+            // Execute the query, using the processed input without semicolon
+            auto result = queryParser->parseQuery(processedInput);
                     displayResults(result);
-                    commandHandled = true;
-                }
+            
+            continue;
             }
             
-            // If it's neither a database nor a recognized table command
-            if (!commandHandled) {
-                std::cout << "Error: Unknown command. Type .help for assistance." << std::endl;
+        // If we get here, the command is not recognized
+        std::cout << "Unrecognized command: " << input << std::endl;
             }
             
-            // Reset for next query
-            query.clear();
-            multiline = false;
-        } else {
-            // Not complete, add newline and continue
-            query += " ";
-            multiline = true;
-        }
+    // Ensure data is flushed before exiting
+    if (queryParser) {
+        queryParser->flushData();
     }
     
     std::cout << "Goodbye!" << std::endl;

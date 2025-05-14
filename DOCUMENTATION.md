@@ -303,17 +303,15 @@ Current limitations:
 1. **No Foreign Keys**: The system doesn't support foreign key relationships between tables
 2. **No Joins**: No support for table JOIN operations
 3. **Limited Data Types**: Only basic data types are supported (no FLOAT, DECIMAL, etc.)
-4. **No Transactions**: No support for transaction operations (BEGIN, COMMIT, ROLLBACK)
-5. **No Indexing**: No index support for faster queries
+4. **No Indexing**: No index support for faster queries
 
 Potential future enhancements:
 
 1. Add support for more data types (FLOAT, DECIMAL, BOOLEAN)
 2. Implement basic JOIN operations
-3. Add transaction support
-4. Implement indexes for faster queries
-5. Add support for aggregate functions (COUNT, SUM, AVG)
-6. Implement more SQL commands (GROUP BY, HAVING, ORDER BY, etc.)
+3. Implement indexes for faster queries
+4. Add support for aggregate functions (COUNT, SUM, AVG)
+5. Implement more SQL commands (GROUP BY, HAVING, ORDER BY, etc.)
 
 ## Troubleshooting and Debugging
 

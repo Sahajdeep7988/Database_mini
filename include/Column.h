@@ -9,88 +9,90 @@ class Column {
 private:
     std::string name;
     DataType dataType;
-    bool primaryKey;
-    bool unique;
-    bool notNull;
-    std::unordered_set<std::string> uniqueValues;
+    bool isPrimaryKeyFlag;
+    bool isUniqueFlag;
+    bool isNotNullFlag;
+    std::unordered_set<std::string> uniqueValues; // For checking unique constraint
 
 public:
-    Column(const std::string& colName, Type type, 
-           bool isPrimaryKey = false, bool isUnique = false, bool isNotNull = false)
-        : name(colName), 
-          dataType(type), 
-          primaryKey(isPrimaryKey), 
-          unique(isUnique || isPrimaryKey), // Primary key implies unique
-          notNull(isNotNull || isPrimaryKey) {} // Primary key implies not null
-    
+    Column(const std::string& colName, Type type, bool primaryKey = false, bool unique = false, bool notNull = false)
+        : name(colName), dataType(type), isPrimaryKeyFlag(primaryKey), 
+          isUniqueFlag(unique || primaryKey), isNotNullFlag(notNull || primaryKey) {
+    }
+
+    Column(const std::string& colName, const DataType& type, bool primaryKey = false, bool unique = false, bool notNull = false)
+        : name(colName), dataType(type), isPrimaryKeyFlag(primaryKey), 
+          isUniqueFlag(unique || primaryKey), isNotNullFlag(notNull || primaryKey) {
+    }
+
     const std::string& getName() const {
         return name;
     }
-    
-    DataType& getDataType() {
-        return dataType;
-    }
-    
+
     const DataType& getDataType() const {
         return dataType;
     }
-    
+
     bool isPrimaryKey() const {
-        return primaryKey;
+        return isPrimaryKeyFlag;
     }
-    
+
     bool isUnique() const {
-        return unique;
+        return isUniqueFlag;
     }
-    
+
     bool isNotNull() const {
-        return notNull;
+        return isNotNullFlag;
     }
-    
-    // Check if a value can be inserted (validates constraints)
+
+    // Check and add a value to the unique value set
+    bool checkAndAddUniqueValue(const std::string& value) {
+        // If this column is not unique, always return true
+        if (!isUniqueFlag) {
+            return true;
+        }
+        
+        // Empty values are allowed for non-NOT NULL columns
+        if (value.empty() && !isNotNullFlag) {
+            return true;
+        }
+        
+        // Check if the value already exists in the unique set
+        if (uniqueValues.find(value) != uniqueValues.end()) {
+            return false; // Value already exists, violates unique constraint
+        }
+        
+        // Add the value to the set
+        uniqueValues.insert(value);
+        return true;
+    }
+
+    // Remove a value from the unique value set
+    void removeUniqueValue(const std::string& value) {
+        if (isUniqueFlag && !value.empty()) {
+            uniqueValues.erase(value);
+        }
+    }
+
+    // Clear all unique values
+    void clearUniqueValues() {
+        uniqueValues.clear();
+    }
+
+    // Validate a value according to column constraints
     bool validateValue(const std::string& value, bool isUpdate = false) const {
-        // If it's an update and the value is empty, we might be skipping this column
+        // Check NOT NULL constraint for non-update operations
+        if (!isUpdate && isNotNullFlag && value.empty()) {
+            return false; // NOT NULL constraint violated
+        }
+        
+        // If empty value is being set during update, it's allowed
         if (isUpdate && value.empty()) {
             return true;
         }
         
-        // Check NOT NULL constraint
-        if (value.empty() && notNull) {
-            return false;
-        }
-        
-        // Validate the data type
-        if (!value.empty() && !dataType.validate(value)) {
-            return false;
-        }
-        
-        return true;
-    }
-    
-    // Check uniqueness and add value to unique set if valid
-    bool checkAndAddUniqueValue(const std::string& value) {
-        if (!unique || value.empty()) {
-            return true;
-        }
-        
-        if (uniqueValues.find(value) != uniqueValues.end()) {
-            return false; // Value already exists, violates uniqueness
-        }
-        
-        uniqueValues.insert(value);
-        return true;
-    }
-    
-    // Remove value from unique set (for DELETE operations)
-    void removeUniqueValue(const std::string& value) {
-        if (unique && !value.empty()) {
-            uniqueValues.erase(value);
-        }
-    }
-    
-    // Clear unique values (when dropping a table)
-    void clearUniqueValues() {
-        uniqueValues.clear();
+        // Validate type
+        return dataType.validateValue(value);
     }
 };
 

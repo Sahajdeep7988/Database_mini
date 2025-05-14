@@ -10,6 +10,7 @@ The system implements a simple SQL-like database that:
 - Provides data persistence through file storage
 - Implements a command-line interface
 - Includes data type validation and constraint enforcement
+- Supports logical operators (AND, OR) in WHERE conditions
 - Works on both Windows and Unix-based systems
 
 This guide will help you understand how the codebase works, what C++ concepts are used, and how you could implement a similar system yourself.
@@ -1151,7 +1152,7 @@ std::unique_ptr<Condition> parseCondition(const std::string& conditionStr) {
     if (valueStr.size() >= 2 && 
         (valueStr.front() == '\'' && valueStr.back() == '\'' ||
          valueStr.front() == '"' && valueStr.back() == '"')) {
-        valueStr = value.substr(1, value.size() - 2);
+        valueStr = valueStr.substr(1, valueStr.size() - 2);
     }
     
     // Create condition
@@ -1192,6 +1193,20 @@ This implementation follows the SQL standard for logical operations:
 - Use parentheses to explicitly group conditions
 
 For example, `WHERE a = 1 AND b = 2 OR c = 3` is evaluated as `(a = 1 AND b = 2) OR c = 3` following standard operator precedence.
+
+The system recently received an update to fix issues with logical operators, particularly AND operations, by improving how logical operators are detected and evaluated in complex conditions.
+
+**Usage Examples with Logical Operators:**
+```sql
+-- Select with multiple conditions using AND
+SELECT * FROM students WHERE age > 21 AND name = 'John Doe';
+
+-- Select with multiple conditions using OR
+SELECT * FROM students WHERE age < 20 OR enrollment_date > '2023-08-01';
+
+-- Select with combined AND and OR conditions
+SELECT * FROM students WHERE (age > 20 AND name = 'Jane Smith') OR enrollment_date > '2023-09-01';
+```
 
 ### String Utilities
 
@@ -1963,93 +1978,37 @@ void displayResults(const QueryResult& result) {
 
 ### Special Commands
 
-The system implements special dot commands for common operations:
+Special commands begin with a dot (.) and provide system-level functionalities:
 
-```cpp
-// List all databases
-void listDatabases(DatabaseSystem& dbSystem) {
-    auto dbNames = dbSystem.getAllDatabaseNames();
-    
-    if (dbNames.empty()) {
-        std::cout << "No databases found." << std::endl;
-        return;
-    }
-    
-    std::cout << "Databases:" << std::endl;
-    for (const auto& name : dbNames) {
-        if (name == dbSystem.getCurrentDatabaseName()) {
-            std::cout << "  - " << name << " (current)" << std::endl;
-        } else {
-            std::cout << "  - " << name << std::endl;
-        }
-    }
-}
+1. **.help**: Displays help information
+2. **.databases**: Lists all databases
+3. **.tables**: Lists all tables in the current database
+4. **.flush**: Flushes all data from memory to disk immediately
+5. **.exit**: Exits the application
 
-// List all tables in the current database
-void listTables(DatabaseSystem& dbSystem) {
-    if (dbSystem.getCurrentDatabaseName().empty()) {
-        std::cout << "Error: No database selected. Use 'USE dbName' first." << std::endl;
-        return;
-    }
-    
-    DatabaseManager* dbManager = dbSystem.getCurrentDatabaseManager();
-    if (!dbManager) {
-        std::cout << "Error: Failed to access database." << std::endl;
-        return;
-    }
-    
-    auto tableNames = dbManager->getAllTableNames();
-    
-    if (tableNames.empty()) {
-        std::cout << "No tables found in the current database." << std::endl;
-        return;
-    }
-    
-    std::cout << "Tables in database '" << dbSystem.getCurrentDatabaseName() << "':" << std::endl;
-    for (const auto& name : tableNames) {
-        std::cout << "  - " << name << std::endl;
-    }
-}
+### Transaction Commands
 
-// Show table schema
-void showTableSchema(DatabaseSystem& dbSystem, const std::string& tableName) {
-    if (dbSystem.getCurrentDatabaseName().empty()) {
-        std::cout << "Error: No database selected. Use 'USE dbName' first." << std::endl;
-        return;
-    }
-    
-    DatabaseManager* dbManager = dbSystem.getCurrentDatabaseManager();
-    if (!dbManager) {
-        std::cout << "Error: Failed to access database." << std::endl;
-        return;
-    }
-    
-    Table* table = dbManager->getTable(tableName);
-    if (!table) {
-        std::cout << "Error: Table '" << tableName << "' does not exist." << std::endl;
-        return;
-    }
-    
-    const auto& columns = table->getColumns();
-    
-    std::cout << "Schema for table '" << tableName << "':" << std::endl;
-    std::cout << "+----------------+----------+-------------+" << std::endl;
-    std::cout << "| Column Name    | Type     | Constraints |" << std::endl;
-    std::cout << "+----------------+----------+-------------+" << std::endl;
-    
-    for (const auto& column : columns) {
-        std::string constraints;
-        if (column.isPrimaryKey()) constraints += "PRIMARY KEY ";
-        else if (column.isUnique()) constraints += "UNIQUE ";
-        if (column.isNotNull() && !column.isPrimaryKey()) constraints += "NOT NULL ";
-        
-        std::cout << "| " << std::left << std::setw(14) << column.getName() << " | "
-                  << std::setw(8) << DataType::typeToString(column.getDataType().getType()) << " | "
-                  << std::setw(11) << constraints << " |" << std::endl;
-    }
-    
-    std::cout << "+----------------+----------+-------------+" << std::endl;
-}
+The system supports ACID-compliant transactions:
+
+1. **BEGIN TRANSACTION** (or **BEGIN**): Starts a new transaction
+2. **COMMIT**: Commits all changes made in the current transaction
+3. **ROLLBACK**: Discards all changes made in the current transaction
+
+Transactions allow you to group multiple operations together, ensuring they are either all completed successfully or none at all. This maintains data integrity in case of errors or failures.
+
+Example usage:
+```sql
+BEGIN TRANSACTION
+INSERT INTO students (id, name) VALUES (1, 'John Doe')
+UPDATE courses SET capacity = capacity - 1 WHERE id = 101
+COMMIT
+```
+
+If any operation fails or you decide to cancel the changes:
+```sql
+BEGIN TRANSACTION
+-- Operations...
+ROLLBACK
 ```
 
 ### User Experience
@@ -2429,3 +2388,4 @@ This project provides an excellent learning opportunity for:
 - Cross-platform development
 
 By understanding the concepts and implementation details covered in this guide, you should now have the knowledge to implement a similar database system or extend this one with your own features.
+ 

@@ -1,0 +1,4 @@
+id,INT,PK,UQ,NN
+name,STRING,,,NN
+department,STRING,,,
+salary,BIGINT,,,

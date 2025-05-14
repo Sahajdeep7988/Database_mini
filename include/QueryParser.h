@@ -26,6 +26,8 @@ struct QueryResult {
 class QueryParser {
 private:
     DatabaseManager& dbManager;
+    int currentTransactionId;
+    bool inTransaction;
     
     // Helper: Trim whitespace from a string
     std::string trim(const std::string& str) {
@@ -548,8 +550,63 @@ private:
         }
     }
     
+    // Parse transaction commands
+    QueryResult parseTransaction(const std::string& query) {
+        // Convert to uppercase and trim for case-insensitive comparison
+        std::string upperQuery = toUpper(trim(query));
+        
+        // Remove trailing semicolon if present
+        if (!upperQuery.empty() && upperQuery.back() == ';') {
+            upperQuery.pop_back();
+        }
+        
+        // BEGIN TRANSACTION or BEGIN
+        if (upperQuery == "BEGIN TRANSACTION" || upperQuery == "BEGIN") {
+            if (inTransaction) {
+                return QueryResult(false, "Transaction already in progress");
+            }
+            
+            currentTransactionId = dbManager.beginTransaction();
+            if (currentTransactionId < 0) {
+                return QueryResult(false, "Failed to begin transaction");
+            }
+            
+            inTransaction = true;
+            return QueryResult(true, "Transaction started");
+        }
+        // COMMIT
+        else if (upperQuery == "COMMIT") {
+            if (!inTransaction) {
+                return QueryResult(false, "No transaction in progress");
+            }
+            
+            if (!dbManager.commitTransaction(currentTransactionId)) {
+                return QueryResult(false, "Failed to commit transaction");
+            }
+            
+            inTransaction = false;
+            return QueryResult(true, "Transaction committed");
+        }
+        // ROLLBACK
+        else if (upperQuery == "ROLLBACK") {
+            if (!inTransaction) {
+                return QueryResult(false, "No transaction in progress");
+            }
+            
+            if (!dbManager.rollbackTransaction(currentTransactionId)) {
+                return QueryResult(false, "Failed to rollback transaction");
+            }
+            
+            inTransaction = false;
+            return QueryResult(true, "Transaction rolled back");
+        }
+        
+        return QueryResult(false, "Unknown transaction command");
+    }
+    
 public:
-    QueryParser(DatabaseManager& manager) : dbManager(manager) {}
+    QueryParser(DatabaseManager& manager) 
+        : dbManager(manager), currentTransactionId(-1), inTransaction(false) {}
     
     // Parse and execute a query
     QueryResult parseQuery(const std::string& query) {
@@ -576,12 +633,27 @@ public:
                 return parseUpdate(trimmedQuery);
             } else if (firstWord == "DELETE") {
                 return parseDelete(trimmedQuery);
+            } else if (firstWord == "BEGIN" || firstWord == "COMMIT" || firstWord == "ROLLBACK") {
+                return parseTransaction(trimmedQuery);
             } else {
                 return QueryResult(false, "Unknown command: " + firstWord);
             }
         } catch (const std::exception& e) {
             return QueryResult(false, "Error executing query: " + std::string(e.what()));
         }
+    }
+    
+    // Check if currently in a transaction
+    bool isInTransaction() const {
+        return inTransaction;
+    }
+    
+    // Flush data to disk
+    QueryResult flushData() {
+        if (dbManager.flushData()) {
+            return QueryResult(true, "Data flushed to disk successfully");
+        }
+        return QueryResult(false, "Failed to flush data to disk");
     }
 };
 

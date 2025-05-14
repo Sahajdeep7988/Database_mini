@@ -1,6 +1,7 @@
 #include "../../include/storage_engine/StorageEngine.h"
 #include "../../include/storage_engine/BufferPoolManager.h"
 #include "../../include/storage_engine/TransactionManager.h"
+#include "../../include/storage_engine/Value.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -57,11 +58,15 @@ std::shared_ptr<Table> StorageEngine::loadTable(const std::string& tableName) {
     size_t columnCount;
     file.read(reinterpret_cast<char*>(&columnCount), sizeof(columnCount));
     
+    // Create a new table with just the name first
+    std::shared_ptr<Table> table = std::make_shared<Table>(tableName);
+    
     for (size_t i = 0; i < columnCount; ++i) {
         std::string name;
-        DataType type;
+        Type type;
         bool primaryKey;
         bool notNull;
+        bool unique;
         
         // Read column name
         size_t nameLength;
@@ -70,69 +75,73 @@ std::shared_ptr<Table> StorageEngine::loadTable(const std::string& tableName) {
         file.read(&name[0], nameLength);
         
         // Read column type
-        file.read(reinterpret_cast<char*>(&type), sizeof(type));
+        int typeInt;
+        file.read(reinterpret_cast<char*>(&typeInt), sizeof(typeInt));
+        type = static_cast<Type>(typeInt);
         
         // Read column constraints
         file.read(reinterpret_cast<char*>(&primaryKey), sizeof(primaryKey));
+        file.read(reinterpret_cast<char*>(&unique), sizeof(unique));
         file.read(reinterpret_cast<char*>(&notNull), sizeof(notNull));
         
-        columns.emplace_back(name, type, primaryKey, notNull);
+        // Add the column to the table
+        table->addColumn(name, type, primaryKey, unique, notNull);
     }
-    
-    // Create the table
-    std::shared_ptr<Table> table = std::make_shared<Table>(tableName, columns);
     
     // Read table rows
     size_t rowCount;
     file.read(reinterpret_cast<char*>(&rowCount), sizeof(rowCount));
     
     for (size_t i = 0; i < rowCount; ++i) {
-        std::vector<Value> values;
+        std::vector<std::string> recordValues;
         
         for (size_t j = 0; j < columnCount; ++j) {
-            DataType type = columns[j].getType();
-            Value value;
+            Type type = table->getColumns()[j].getDataType().getType();
             
-            // Read value type
-            file.read(reinterpret_cast<char*>(&value.type), sizeof(value.type));
-            
-            // Read value data
-            switch (value.type) {
-                case DataType::INT: {
+            // Read value based on type
+            switch (type) {
+                case Type::INT: {
                     int intValue;
                     file.read(reinterpret_cast<char*>(&intValue), sizeof(intValue));
-                    value.intValue = intValue;
+                    recordValues.push_back(std::to_string(intValue));
                     break;
                 }
-                case DataType::DOUBLE: {
-                    double doubleValue;
-                    file.read(reinterpret_cast<char*>(&doubleValue), sizeof(doubleValue));
-                    value.doubleValue = doubleValue;
+                case Type::BIGINT: {
+                    long long bigintValue;
+                    file.read(reinterpret_cast<char*>(&bigintValue), sizeof(bigintValue));
+                    recordValues.push_back(std::to_string(bigintValue));
                     break;
                 }
-                case DataType::STRING: {
+                case Type::STRING: {
                     size_t stringLength;
                     file.read(reinterpret_cast<char*>(&stringLength), sizeof(stringLength));
                     std::string stringValue;
                     stringValue.resize(stringLength);
                     file.read(&stringValue[0], stringLength);
-                    value.stringValue = stringValue;
+                    recordValues.push_back(stringValue);
                     break;
                 }
-                case DataType::BOOL: {
-                    bool boolValue;
-                    file.read(reinterpret_cast<char*>(&boolValue), sizeof(boolValue));
-                    value.boolValue = boolValue;
+                case Type::DATE: {
+                    size_t stringLength;
+                    file.read(reinterpret_cast<char*>(&stringLength), sizeof(stringLength));
+                    std::string dateValue;
+                    dateValue.resize(stringLength);
+                    file.read(&dateValue[0], stringLength);
+                    recordValues.push_back(dateValue);
                     break;
                 }
                 default:
+                    recordValues.push_back("");
                     break;
             }
-            
-            values.push_back(value);
         }
         
-        table->insertRow(values);
+        // Insert the record into the table
+        std::vector<std::pair<std::string, std::string>> record;
+        for (size_t j = 0; j < columnCount; ++j) {
+            record.emplace_back(table->getColumns()[j].getName(), recordValues[j]);
+        }
+        table->insertRecord(record);
     }
     
     return table;
@@ -144,7 +153,15 @@ std::shared_ptr<Table> StorageEngine::createTable(const std::string& tableName, 
         return nullptr;
     }
     
-    std::shared_ptr<Table> table = std::make_shared<Table>(tableName, columns);
+    // Create a new table with just the name first
+    std::shared_ptr<Table> table = std::make_shared<Table>(tableName);
+    
+    // Add each column to the table
+    for (const auto& column : columns) {
+        table->addColumn(column.getName(), column.getDataType().getType(), 
+                         column.isPrimaryKey(), column.isUnique(), column.isNotNull());
+    }
+    
     tables_[tableName] = table;
     
     // Save table metadata to disk
@@ -162,8 +179,9 @@ std::shared_ptr<Table> StorageEngine::createTable(const std::string& tableName, 
     
     for (const auto& column : columns) {
         std::string name = column.getName();
-        DataType type = column.getType();
+        Type type = column.getDataType().getType();
         bool primaryKey = column.isPrimaryKey();
+        bool unique = column.isUnique();
         bool notNull = column.isNotNull();
         
         // Write column name
@@ -172,10 +190,12 @@ std::shared_ptr<Table> StorageEngine::createTable(const std::string& tableName, 
         file.write(name.c_str(), nameLength);
         
         // Write column type
-        file.write(reinterpret_cast<const char*>(&type), sizeof(type));
+        int typeInt = static_cast<int>(type);
+        file.write(reinterpret_cast<const char*>(&typeInt), sizeof(typeInt));
         
         // Write column constraints
         file.write(reinterpret_cast<const char*>(&primaryKey), sizeof(primaryKey));
+        file.write(reinterpret_cast<const char*>(&unique), sizeof(unique));
         file.write(reinterpret_cast<const char*>(&notNull), sizeof(notNull));
     }
     

@@ -2,6 +2,7 @@
 #define DATABASE_MANAGER_H
 
 #include "Table.h"
+#include "storage_engine/StorageEngine.h"
 #include <unordered_map>
 #include <memory>
 #include <dirent.h>
@@ -12,6 +13,7 @@ class DatabaseManager {
 private:
     std::unordered_map<std::string, std::unique_ptr<Table>> tables;
     std::string dataDirectory;
+    std::unique_ptr<sqldb::StorageEngine> storageEngine;
     
     // Load existing tables from data directory
     void loadExistingTables() {
@@ -27,7 +29,7 @@ private:
             return;
         }
         
-        // Set to keep track of table names (we'll have .meta and .data files)
+        // Set to keep track of table names
         std::set<std::string> tableNames;
         
         // Read directory entries
@@ -40,8 +42,8 @@ private:
                 continue;
             }
             
-            // Check if file has .meta extension
-            size_t pos = filename.find(".meta");
+            // Only look for .table extension (storage engine format)
+            size_t pos = filename.find(".table");
             if (pos != std::string::npos) {
                 // Extract table name
                 std::string tableName = filename.substr(0, pos);
@@ -51,14 +53,22 @@ private:
         
         closedir(dir);
         
-        // Load tables
+        // Load tables from storage engine
         for (const auto& tableName : tableNames) {
-            tables[tableName] = std::make_unique<Table>(tableName, dataDirectory);
+            if (storageEngine) {
+                auto loadedTable = storageEngine->loadTable(tableName);
+                if (loadedTable) {
+                    // Convert shared_ptr to unique_ptr
+                    tables[tableName] = std::make_unique<Table>(*loadedTable);
+                }
+            }
         }
     }
     
 public:
-    DatabaseManager() : dataDirectory("data") {
+    DatabaseManager() : dataDirectory("data"), storageEngine(std::make_unique<sqldb::StorageEngine>(1000)) {
+        // Initialize storage engine with default buffer pool size (1000 pages)
+        storageEngine->initialize(dataDirectory);
         loadExistingTables();
     }
     
@@ -67,6 +77,12 @@ public:
         dataDirectory = directory;
         // Clear existing tables
         tables.clear();
+        
+        // Initialize storage engine with the new directory
+        if (storageEngine) {
+            storageEngine->initialize(directory);
+        }
+        
         // Load tables from the new directory
         loadExistingTables();
     }
@@ -76,16 +92,49 @@ public:
         return dataDirectory;
     }
     
-    // Create a new table
+    // Create a new table (legacy version, prefer createTableWithColumns)
     bool createTable(const std::string& tableName) {
         // Check if table already exists
         if (tables.find(tableName) != tables.end()) {
             return false;
         }
         
-        // Create new table
-        tables[tableName] = std::make_unique<Table>(tableName, dataDirectory);
+        // Create empty columns list for storage engine
+        std::vector<Column> emptyColumns;
+        
+        // Use storage engine to create table
+        if (storageEngine) {
+            auto newTable = storageEngine->createTable(tableName, emptyColumns);
+            if (newTable) {
+                // Convert shared_ptr to unique_ptr
+                tables[tableName] = std::make_unique<Table>(*newTable);
+                return true;
+            }
+        }
+        
+        // Failed to create table
+        return false;
+    }
+    
+    // Create a new table with columns using the storage engine
+    bool createTableWithColumns(const std::string& tableName, const std::vector<Column>& columns) {
+        // Check if table already exists
+        if (tables.find(tableName) != tables.end()) {
+            return false;
+        }
+        
+        // Use storage engine to create table
+        if (storageEngine) {
+            auto newTable = storageEngine->createTable(tableName, columns);
+            if (newTable) {
+                // Convert shared_ptr to unique_ptr
+                tables[tableName] = std::make_unique<Table>(*newTable);
         return true;
+            }
+        }
+        
+        // Failed to create table
+        return false;
     }
     
     // Get a table by name
@@ -104,14 +153,16 @@ public:
             return false;
         }
         
-        // Drop the table
-        if (!it->second->drop()) {
-            return false;
-        }
-        
-        // Remove from map
+        // Drop the table using storage engine
+        if (storageEngine) {
+            if (storageEngine->deleteTable(tableName)) {
         tables.erase(it);
         return true;
+            }
+        }
+        
+        // Failed to drop table
+        return false;
     }
     
     // Check if a table exists
@@ -129,6 +180,43 @@ public:
         }
         
         return tableNames;
+    }
+    
+    // Get the storage engine
+    sqldb::StorageEngine* getStorageEngine() {
+        return storageEngine.get();
+    }
+    
+    // Begin a transaction
+    int beginTransaction() {
+        if (storageEngine) {
+            return storageEngine->beginTransaction();
+        }
+        return -1;
+    }
+    
+    // Commit a transaction
+    bool commitTransaction(int transactionId) {
+        if (storageEngine) {
+            return storageEngine->commitTransaction(transactionId);
+        }
+        return false;
+    }
+    
+    // Rollback a transaction
+    bool rollbackTransaction(int transactionId) {
+        if (storageEngine) {
+            return storageEngine->rollbackTransaction(transactionId);
+        }
+        return false;
+    }
+    
+    // Flush all data to disk
+    bool flushData() {
+        if (storageEngine) {
+            return storageEngine->flushBufferPool();
+        }
+        return false;
     }
 };
 

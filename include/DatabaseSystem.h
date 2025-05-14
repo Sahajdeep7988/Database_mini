@@ -98,6 +98,7 @@ private:
         return success;
     }
     
+    // Helper function to create a database directory
     bool createDatabaseDirectory(const std::string& dbName) {
         // First ensure the base directory exists
         if (!createDir(baseDirectory)) {
@@ -105,13 +106,15 @@ private:
             return false;
         }
         
-        // Create path with proper separator
+        // Construct database path
         std::string dbPath;
+        std::string dataPath;
         #ifdef _WIN32
-            // Normalize path with backslashes for Windows
             dbPath = baseDirectory + "\\" + dbName;
+            dataPath = dbPath + "\\data";
         #else
             dbPath = baseDirectory + "/" + dbName;
+            dataPath = dbPath + "/data";
         #endif
         
         // Create database directory
@@ -120,17 +123,15 @@ private:
             return false;
         }
         
-        // Create data subdirectory
-        std::string dataPath;
-        #ifdef _WIN32
-            dataPath = dbPath + "\\data";
-        #else
-            dataPath = dbPath + "/data";
-        #endif
-        
+        // Create data directory inside database
         if (!createDir(dataPath)) {
             std::cerr << "Error creating data directory: " << dataPath << std::endl;
             return false;
+        }
+        
+        // Ensure transaction logs directory exists
+        if (!createDir("test_transactions")) {
+            std::cerr << "Warning: Failed to create transaction logs directory" << std::endl;
         }
         
         return true;

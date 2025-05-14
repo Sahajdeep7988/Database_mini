@@ -2,6 +2,9 @@
 
 A simple SQL-like database system implemented in C++ that handles basic database operations with persistence. The system supports multiple databases, tables, and various SQL commands.
 
+> **⚠️ IMPORTANT:** Unlike standard SQL, commands in this system should NOT end with semicolons. 
+> See [USAGE_NOTES.md](USAGE_NOTES.md) for more details.
+
 ## Author
 **Sahajdeep Singh**  
 Email: sahajdeepsingh404@gmail.com  
@@ -53,7 +56,13 @@ Mobile: +91 7988168548
 - **.help**: Displays help information
 - **.databases**: Lists all databases
 - **.tables**: Lists tables in the current database
+- **.flush**: Flushes all data to disk immediately
 - **.exit**: Exits the program
+
+### Transaction Commands
+- **BEGIN TRANSACTION** (or **BEGIN**): Starts a new transaction
+- **COMMIT**: Commits the current transaction, making changes permanent
+- **ROLLBACK**: Rolls back the current transaction, discarding all changes
 
 ## Key Features
 - **Case-insensitive commands**: All SQL commands are case-insensitive
@@ -61,31 +70,81 @@ Mobile: +91 7988168548
 - **Multiple database support**: Create and manage multiple databases
 - **Error handling**: Robust error handling and reporting
 - **Cross-platform**: Works on Windows and Unix-based systems
+- **Advanced Storage Engine**: Efficient data storage and retrieval with B-Tree indexing
+- **Transaction Support**: ACID-compliant transactions with commit and rollback
+- **Buffer Pool Management**: LRU-based caching for improved performance
+
+## Storage Engine
+
+The database system includes a robust storage engine with the following components:
+
+### StorageEngine
+The main class that manages physical data storage, table operations, and transaction coordination.
+
+### BufferPoolManager
+An LRU-based buffer pool for caching database pages in memory, with methods for:
+- Page allocation and deallocation
+- Page fetching and pinning/unpinning
+- Dirty page tracking and flushing to disk
+
+### BTreeIndex
+A B-Tree index implementation for efficient data retrieval with logarithmic time complexity, supporting:
+- Key insertion and deletion
+- Point queries
+- Range queries
+
+### TransactionManager
+Transaction support with ACID properties:
+- Write-ahead logging
+- Lock management (shared/exclusive locks)
+- Transaction states (active, committed, aborted)
+
+### Performance Testing
+The system includes a performance testing tool to evaluate:
+- Insert throughput
+- Point query performance
+- Range query performance
+- Update performance
+- Delete performance
 
 ## Building and Running
 
 ### Prerequisites
 - C++17 compatible compiler (GCC, Clang, MSVC)
+- CMake 3.10 or higher
 
 ### Build
 ```bash
-# On Linux/Mac
-g++ -std=c++17 src/main.cpp -o sqldb -I include/
+# Create build directory
+mkdir build
+cd build
 
-# On Windows with MSVC
-cl /std:c++17 /EHsc /Iinclude src/main.cpp /Fesqldb.exe
+# Configure with CMake
+cmake ..
 
-# On Windows with MinGW
-g++ -std=c++17 src/main.cpp -o sqldb.exe -I include/
+# Build
+cmake --build .
 ```
 
 ### Run
 ```bash
-# On Linux/Mac
+# Run the main application
 ./sqldb
 
+# Run storage engine tests
+./storage_engine_test
+
+# Run performance tests
+./storage_engine_perf_test [record_count]
+```
+
+### Performance Testing Scripts
+```bash
 # On Windows
-sqldb.exe
+run_performance_test.bat
+
+# On Linux/Mac
+./run_performance_test.sh
 ```
 
 ## Detailed Usage Guide
@@ -196,9 +255,18 @@ SELECT * FROM students WHERE enrollment_date < '2023-09-01';
 │   ├── DatabaseSystem.h    # Database system
 │   ├── QueryParser.h       # SQL query parser
 │   ├── StringFunction.h    # String functions (UPPER, LOWER, etc.)
-│   └── Table.h             # Table class
+│   ├── Table.h             # Table class
+│   └── storage_engine/     # Storage engine components
+│       ├── StorageEngine.h # Main storage engine class
+│       ├── BufferPoolManager.h # Buffer pool manager
+│       ├── BTreeIndex.h    # B-Tree index
+│       ├── TransactionManager.h # Transaction manager
+│       └── Value.h         # Value representation
 └── src/                    # Source files
-    └── main.cpp            # Main application
+    ├── main.cpp            # Main application entry point
+    ├── storage_engine_test.cpp # Storage engine tests
+    ├── storage_engine_performance_test.cpp # Performance tests
+    └── storage_engine/     # Storage engine implementations
 ```
 
 ## Troubleshooting
@@ -213,7 +281,7 @@ SELECT * FROM students WHERE enrollment_date < '2023-09-01';
 
 ## See Also
 
-For more detailed information about the implementation and architecture, please see the [DOCUMENTATION.md](DOCUMENTATION.md) file.
+For more detailed information about the implementation and architecture, please see the [DOCUMENTATION.md](DOCUMENTATION.md) file. 
 
 ## Future Development: Advanced Storage Engine
 

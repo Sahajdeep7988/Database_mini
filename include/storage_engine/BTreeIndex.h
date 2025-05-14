@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <functional>
+#include <algorithm>
 #include "../DataType.h"
 
 namespace sqldb {
@@ -52,13 +53,6 @@ public:
      */
     bool split(std::shared_ptr<BTreeNode<KeyType>> parent, int childIndex);
     
-private:
-    // Whether this node is a leaf node
-    bool isLeaf_;
-    
-    // The order of the B-Tree
-    int order_;
-    
     // The keys stored in this node
     std::vector<KeyType> keys_;
     
@@ -70,6 +64,13 @@ private:
     
     // The next leaf node (for leaf nodes)
     std::shared_ptr<BTreeNode<KeyType>> nextLeaf_;
+    
+private:
+    // Whether this node is a leaf node
+    bool isLeaf_;
+    
+    // The order of the B-Tree
+    int order_;
 };
 
 /**
@@ -82,10 +83,10 @@ public:
     /**
      * @brief Constructor for BTreeIndex
      * @param columnName The name of the column to index
-     * @param dataType The data type of the column
+     * @param type The data type of the column
      * @param order The order of the B-Tree
      */
-    BTreeIndex(const std::string& columnName, DataType dataType, int order = 3);
+    BTreeIndex(const std::string& columnName, Type type, int order = 3);
     
     /**
      * @brief Insert a key-value pair into the index
@@ -133,17 +134,7 @@ public:
      */
     bool loadFromFile(const std::string& filename);
     
-private:
-    // The name of the column to index
-    std::string columnName_;
-    
-    // The data type of the column
-    DataType dataType_;
-    
-    // The order of the B-Tree
-    int order_;
-    
-    // The root node of the B-Tree
+    // The root node of the B-Tree (public for testing)
     std::shared_ptr<BTreeNode<KeyType>> root_;
     
     /**
@@ -155,7 +146,41 @@ private:
      */
     std::shared_ptr<BTreeNode<KeyType>> searchNode(const KeyType& key, 
                                                   std::shared_ptr<BTreeNode<KeyType>> node,
-                                                  std::vector<std::shared_ptr<BTreeNode<KeyType>>>& path) const;
+                                                  std::vector<std::shared_ptr<BTreeNode<KeyType>>>& path) const {
+        if (!node) {
+            return nullptr;
+        }
+        
+        // If this is a leaf node, return it
+        if (node->isLeaf()) {
+            return node;
+        }
+        
+        // Find the appropriate child
+        auto it = std::lower_bound(node->keys_.begin(), node->keys_.end(), key);
+        size_t pos = it - node->keys_.begin();
+        
+        // Add this node to the path
+        path.push_back(node);
+        
+        // If key exists, go to the right child
+        if (it != node->keys_.end() && *it == key) {
+            return searchNode(key, node->children_[pos + 1], path);
+        } else {
+            // Otherwise, go to the left child
+            return searchNode(key, node->children_[pos], path);
+        }
+    }
+    
+private:
+    // The name of the column to index
+    std::string columnName_;
+    
+    // The data type of the column
+    DataType dataType_;
+    
+    // The order of the B-Tree
+    int order_;
 };
 
 } // namespace sqldb

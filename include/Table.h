@@ -313,6 +313,16 @@ public:
         }
     }
 
+    // Copy constructor
+    Table(const Table& other) 
+        : name(other.name), dataDir(other.dataDir), columns(other.columns),
+          records(other.records), dataFilePath(other.dataFilePath), metaFilePath(other.metaFilePath) {
+        // Rebuild the column map
+        for (size_t i = 0; i < columns.size(); ++i) {
+            columnMap[columns[i].getName()] = i;
+        }
+    }
+
     const std::string& getName() const {
         return name;
     }
@@ -337,6 +347,34 @@ public:
         // Add the new column
         columnMap[columnName] = columns.size();
         columns.emplace_back(columnName, type, isPrimaryKey, isUnique, isNotNull);
+
+        // Add empty values for this column to all existing records
+        for (auto& record : records) {
+            record.push_back("");
+        }
+
+        return saveToFile();
+    }
+
+    // Add a column object to the table
+    bool addColumn(const Column& column) {
+        // Check if column already exists
+        if (columnMap.find(column.getName()) != columnMap.end()) {
+            return false;
+        }
+
+        // Check if trying to add a primary key when one already exists
+        if (column.isPrimaryKey()) {
+            for (const auto& col : columns) {
+                if (col.isPrimaryKey()) {
+                    return false; // Can't have multiple primary keys
+                }
+            }
+        }
+
+        // Add the new column
+        columnMap[column.getName()] = columns.size();
+        columns.push_back(column);
 
         // Add empty values for this column to all existing records
         for (auto& record : records) {
