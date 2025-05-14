@@ -74,6 +74,37 @@ Mobile: +91 7988168548
 - **Transaction Support**: ACID-compliant transactions with commit and rollback
 - **Buffer Pool Management**: LRU-based caching for improved performance
 
+## Recent Updates
+- Fixed logical operators in WHERE clauses, particularly AND conditions
+- Improved condition parsing with better regex patterns
+- Added comprehensive test scripts for Windows (run_test.bat and run_test.ps1)
+- Updated documentation with detailed examples of logical operators
+- Enhanced error handling for complex queries
+
+## Running Tests
+You can run the included test scripts to verify the system functionality:
+
+### Windows (PowerShell)
+```powershell
+# Run the PowerShell test script
+.\run_test.ps1
+```
+
+### Windows (Command Prompt)
+```cmd
+# Run the batch test script
+run_test.bat
+```
+
+### Linux/macOS
+```bash
+# Run the shell test script
+chmod +x run_test.sh  # Make executable (first time only)
+./run_test.sh
+```
+
+The test scripts will compile the program and run a series of SQL commands from simple_test.sql, demonstrating various features including the logical operators in WHERE clauses.
+
 ## Storage Engine
 
 The database system includes a robust storage engine with the following components:
@@ -224,10 +255,16 @@ UPDATE students SET age = 21 WHERE id = 1;
 DELETE FROM students WHERE id = 2;
 ```
 
-### Advanced Queries
+### Advanced Queries with Logical Operators
 ```sql
--- Combine conditions with AND/OR
+-- Combine conditions with AND
 SELECT * FROM students WHERE age > 20 AND tuition_fee = 125000;
+
+-- Combine conditions with OR
+SELECT * FROM students WHERE age < 20 OR enrollment_date > '2023-09-01';
+
+-- Complex conditions with both AND and OR
+SELECT * FROM students WHERE (age > 21 AND tuition_fee < 150000) OR name = 'John Smith';
 
 -- Using comparison operators
 SELECT * FROM students WHERE enrollment_date < '2023-09-01';
@@ -239,6 +276,7 @@ SELECT * FROM students WHERE enrollment_date < '2023-09-01';
 - Tables are stored as pairs of files: .meta (schema) and .data (records)
 - Commands are parsed using regex patterns for flexibility
 - Cross-platform path handling for Windows and Unix systems
+- Logical operators are implemented with a linked condition structure
 
 ## Project Structure
 
@@ -278,6 +316,8 @@ SELECT * FROM students WHERE enrollment_date < '2023-09-01';
 3. **Invalid Command**: All SQL commands must end with a semicolon (;). Special dot commands like `.help` do not require a semicolon.
 
 4. **Syntax Errors**: Make sure your SQL commands follow the correct syntax as shown in the examples.
+
+5. **Logical Operator Issues**: When using complex conditions with multiple AND/OR operators, use parentheses to explicitly group conditions if the default precedence doesn't match your intent.
 
 ## See Also
 
