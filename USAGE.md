@@ -1,4 +1,4 @@
-# SQL-like Database System - Usage Guide
+# RelictDB - Usage Guide
 
 ## Important Syntax Note
 
@@ -11,27 +11,27 @@
 1. **Installation**:
    ```bash
    # Clone the repository
-   git clone https://github.com/Sahajdeep7988/Database_mini.git
-   cd Database_mini
+   git clone https://github.com/Sahajdeep7988/RelictDB.git
+   cd RelictDB
 
    # Compile the program
-   g++ -std=c++17 src/main.cpp src/storage_engine/*.cpp -o sqldb -I include/
+   g++ -std=c++17 src/main.cpp src/storage_engine/*.cpp -o relictdb -I include/
    ```
 
 2. **Running the Application**:
    ```bash
    # Linux/macOS
-   ./sqldb
+   ./relictdb
 
    # Windows
-   sqldb.exe
+   relictdb.exe
    ```
 
 ## Basic Usage
 
 When you start the application, you'll see a prompt:
 ```
-Welcome to the SQL-like Database System
+Welcome to RelictDB
 Type '.help' for usage information or '.exit' to quit
 >
 ```

@@ -1,10 +1,10 @@
-# SQL-like Database System - Comprehensive Guide
+# RelictDB - Comprehensive Guide
 
 ## Introduction
 
-This document provides a detailed guide to the SQL-like database system implemented in C++. This project demonstrates a wide range of C++ programming concepts and practical applications, from basic object-oriented principles to advanced features like regular expressions and cross-platform compatibility.
+This document provides a detailed guide to the RelictDB system implemented in C++. This project demonstrates a wide range of C++ programming concepts and practical applications, from basic object-oriented principles to advanced features like regular expressions and cross-platform compatibility.
 
-The system implements a simple SQL-like database that:
+The system implements a simple RelictDB that:
 - Supports multiple databases and tables
 - Handles basic SQL commands (CREATE, DROP, ALTER, SELECT, INSERT, UPDATE, DELETE)
 - Provides data persistence through file storage
@@ -1858,7 +1858,7 @@ The system displays a welcome message and help information at startup:
 ```cpp
 void printHelp() {
     std::cout << "====================================================" << std::endl;
-    std::cout << "  Simple SQL-like Database System" << std::endl;
+    std::cout << "  Simple RelictDB System" << std::endl;
     std::cout << "====================================================" << std::endl;
     std::cout << "Database commands:" << std::endl;
     std::cout << "  CREATE DATABASE dbName" << std::endl;
@@ -2362,7 +2362,7 @@ Common issues and solutions:
 
 ## Conclusion
 
-This comprehensive guide has covered the key aspects of the SQL-like database system implemented in C++. The project demonstrates a wide range of programming concepts and provides a functional database system with persistence, SQL command support, and a user-friendly interface.
+This comprehensive guide has covered the key aspects of the RelictDB system implemented in C++. The project demonstrates a wide range of programming concepts and provides a functional database system with persistence, SQL command support, and a user-friendly interface.
 
 ### Key Takeaways
 

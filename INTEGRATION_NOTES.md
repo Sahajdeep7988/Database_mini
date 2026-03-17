@@ -1,6 +1,6 @@
 # Storage Engine Integration Notes
 
-This document describes the changes made to integrate the storage engine with the SQL-like database system.
+This document describes the changes made to integrate the storage engine with the RelictDB system.
 
 ## Key Components Modified
 

@@ -1,8 +1,8 @@
-# SQL-like Database System - Technical Documentation
+# RelictDB - Technical Documentation
 
 ## Overview
 
-This document provides detailed technical information about the SQL-like database system implementation. The system is designed to provide a simple but effective in-memory and disk-persistent database engine with SQL-like syntax for data storage and retrieval.
+This document provides detailed technical information about the RelictDB system implementation. The system is designed to provide a simple but effective in-memory and disk-persistent database engine with SQL-like syntax for data storage and retrieval.
 
 ## Author
 **Sahajdeep Singh**  
@@ -345,4 +345,4 @@ Potential future enhancements:
 
 ## Conclusion
 
-This SQL-like database system provides a lightweight yet functional implementation of database operations with persistent storage. It's designed for educational purposes and small applications. While it lacks some features of full-fledged database systems, it demonstrates the core concepts of database management systems and SQL query processing. 
+This RelictDB system provides a lightweight yet functional implementation of database operations with persistent storage. It's designed for educational purposes and small applications. While it lacks some features of full-fledged database systems, it demonstrates the core concepts of database management systems and SQL query processing. 

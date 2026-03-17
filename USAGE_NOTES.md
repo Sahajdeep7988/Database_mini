@@ -1,4 +1,4 @@
-# SQL-like Database System - Usage Notes
+# RelictDB - Usage Notes
 
 ## Important Syntax Notes
 
@@ -89,3 +89,4 @@ Exited database 'testdb'.
 
 > .exit
 Goodbye! 
+```

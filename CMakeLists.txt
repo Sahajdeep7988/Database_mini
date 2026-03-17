@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(SQLDatabase VERSION 1.0)
+project(RelictDB VERSION 1.0)
 
 # Specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -19,7 +19,7 @@ list(FILTER MAIN_SOURCES EXCLUDE REGEX ".*storage_engine_test\\.cpp$")
 list(FILTER MAIN_SOURCES EXCLUDE REGEX ".*storage_engine_performance_test\\.cpp$")
 
 # Add main executable
-add_executable(sqldb ${MAIN_SOURCES})
+add_executable(relictdb ${MAIN_SOURCES})
 
 # Add test executable
 add_executable(storage_engine_test 
@@ -40,7 +40,7 @@ add_executable(storage_engine_perf_test
 )
 
 # Set output directory
-set_target_properties(sqldb PROPERTIES
+set_target_properties(relictdb PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
@@ -54,11 +54,11 @@ set_target_properties(storage_engine_perf_test PROPERTIES
 
 # Enable warnings
 if(MSVC)
-    target_compile_options(sqldb PRIVATE /W4)
+    target_compile_options(relictdb PRIVATE /W4)
     target_compile_options(storage_engine_test PRIVATE /W4)
     target_compile_options(storage_engine_perf_test PRIVATE /W4)
 else()
-    target_compile_options(sqldb PRIVATE -Wall -Wextra -pedantic)
+    target_compile_options(relictdb PRIVATE -Wall -Wextra -pedantic)
     target_compile_options(storage_engine_test PRIVATE -Wall -Wextra -pedantic)
     target_compile_options(storage_engine_perf_test PRIVATE -Wall -Wextra -pedantic)
 endif() 
