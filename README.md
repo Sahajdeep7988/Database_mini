@@ -1,9 +1,7 @@
 ![C++17](https://img.shields.io/badge/C++-17-blue?logo=cplusplus) ![CMake](https://img.shields.io/badge/Build-CMake-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows-lightgrey)
 
 # RelictDB
-> A lightweight relational database engine built from scratch in C++
-
-A lightweight relational database engine built from scratch in C++ — featuring a hand-written SQL parser, B-Tree indexing, LRU buffer pool, and ACID-compliant transactions with file-based persistence.
+> A lightweight relational database engine built from scratch in C++ — featuring a hand-written SQL parser, B-Tree indexing, LRU buffer pool, and ACID-compliant transactions with file-based persistence.
 
 ## Motivation
 
