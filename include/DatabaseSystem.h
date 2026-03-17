@@ -17,6 +17,7 @@
 #else
     #include <sys/types.h>
     #include <sys/stat.h>
+    #include <unistd.h>   // For rmdir on POSIX systems
     #define MKDIR(dir) mkdir(dir, 0777)
 #endif
 

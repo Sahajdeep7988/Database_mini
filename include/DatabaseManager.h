@@ -9,6 +9,13 @@
 #include <set>
 #include <string.h>
 
+#ifdef _WIN32
+    #include <direct.h>
+#else
+    #include <sys/types.h>
+    #include <sys/stat.h>
+#endif
+
 class DatabaseManager {
 private:
     std::unordered_map<std::string, std::unique_ptr<Table>> tables;

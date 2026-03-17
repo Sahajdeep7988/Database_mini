@@ -118,11 +118,11 @@ public:
         
         // Insert records
         for (int i = 0; i < count; ++i) {
-            std::vector<std::string> values;
-            values.push_back(std::to_string(i));                    // id
-            values.push_back(generateRandomString(10));             // name
-            values.push_back(std::to_string(rand() % 10000));       // value
-            values.push_back(generateRandomString(50));             // description
+            std::vector<std::pair<std::string, std::string>> values;
+            values.push_back({"id", std::to_string(i)});
+            values.push_back({"name", generateRandomString(10)});
+            values.push_back({"value", std::to_string(rand() % 10000)});
+            values.push_back({"description", generateRandomString(50)});
             
             // Insert the record
             table->insertRecord(values);
@@ -156,11 +156,14 @@ public:
         for (int i = 0; i < count; ++i) {
             int id = dist(rng);
             
-            // Create a simple WHERE clause for id = X
-            std::string whereClause = "id = " + std::to_string(id);
-            
+            // Build condition: id = X
+            Condition condition;
+            condition.column = "id";
+            condition.op = Condition::Operator::EQUALS;
+            condition.value = std::to_string(id);
+
             // Execute the query
-            auto result = table->select({"id", "name", "value"}, whereClause);
+            table->selectRecords({"id", "name", "value"}, &condition);
         }
         
         // Commit transaction
@@ -186,12 +189,20 @@ public:
             int startId = dist(rng);
             int endId = startId + rangeSize - 1;
             
-            // Create a range WHERE clause
-            std::string whereClause = "id >= " + std::to_string(startId) + 
-                                     " AND id <= " + std::to_string(endId);
-            
+            // Build condition: id >= startId AND id <= endId
+            Condition firstCondition;
+            firstCondition.column = "id";
+            firstCondition.op = Condition::Operator::GREATER_EQUAL;
+            firstCondition.value = std::to_string(startId);
+            firstCondition.logicalOp = Condition::LogicalOperator::AND;
+
+            firstCondition.nextCondition = std::make_shared<Condition>();
+            firstCondition.nextCondition->column = "id";
+            firstCondition.nextCondition->op = Condition::Operator::LESS_EQUAL;
+            firstCondition.nextCondition->value = std::to_string(endId);
+
             // Execute the query
-            auto result = table->select({"id", "name", "value"}, whereClause);
+            table->selectRecords({"id", "name", "value"}, &firstCondition);
         }
         
         // Commit transaction
@@ -217,15 +228,18 @@ public:
             int id = dist(rng);
             
             // Create update values
-            std::unordered_map<std::string, std::string> updateValues;
-            updateValues["value"] = std::to_string(rand() % 10000);
-            updateValues["description"] = generateRandomString(50);
-            
-            // Create WHERE clause
-            std::string whereClause = "id = " + std::to_string(id);
-            
+            std::vector<std::pair<std::string, std::string>> updateValues;
+            updateValues.push_back({"value", std::to_string(rand() % 10000)});
+            updateValues.push_back({"description", generateRandomString(50)});
+
+            // Build condition: id = X
+            Condition condition;
+            condition.column = "id";
+            condition.op = Condition::Operator::EQUALS;
+            condition.value = std::to_string(id);
+
             // Execute the update
-            table->update(updateValues, whereClause);
+            table->updateRecords(updateValues, &condition);
             
             // Commit every 1000 updates
             if (i > 0 && i % 1000 == 0) {
@@ -256,11 +270,14 @@ public:
         for (int i = 0; i < count / 10; ++i) { // Delete 10% of records
             int id = dist(rng);
             
-            // Create WHERE clause
-            std::string whereClause = "id = " + std::to_string(id);
-            
+            // Build condition: id = X
+            Condition condition;
+            condition.column = "id";
+            condition.op = Condition::Operator::EQUALS;
+            condition.value = std::to_string(id);
+
             // Execute the delete
-            table->deleteRecords(whereClause);
+            table->deleteRecords(&condition);
             
             // Commit every 100 deletes
             if (i > 0 && i % 100 == 0) {

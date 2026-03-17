@@ -332,14 +332,14 @@ private:
         size_t orPos = std::string::npos;
         
         // Look for case-insensitive " AND " with proper word boundaries
-        std::regex andRegex(R"((?i)\s+AND\s+)");
+        std::regex andRegex(R"(\s+AND\s+)", std::regex_constants::icase);
         std::smatch andMatch;
         if (std::regex_search(conditionStr, andMatch, andRegex)) {
             andPos = andMatch.position();
         }
         
         // Look for case-insensitive " OR " with proper word boundaries
-        std::regex orRegex(R"((?i)\s+OR\s+)");
+        std::regex orRegex(R"(\s+OR\s+)", std::regex_constants::icase);
         std::smatch orMatch;
         if (std::regex_search(conditionStr, orMatch, orRegex)) {
             orPos = orMatch.position();
@@ -385,6 +385,10 @@ private:
         std::string valueStr = trim(condMatches[3].str());
         
         // Remove quotes from value if present
+        if (valueStr.empty()) {
+            throw std::invalid_argument("Missing value in condition: " + conditionStr);
+        }
+
         if ((valueStr.front() == '\'' && valueStr.back() == '\'') ||
             (valueStr.front() == '"' && valueStr.back() == '"')) {
             valueStr = valueStr.substr(1, valueStr.length() - 2);

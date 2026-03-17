@@ -37,7 +37,7 @@ public:
                 }
                 
                 try {
-                    int val = std::stoi(value);
+                    std::stoi(value);
                     return true;
                 } catch (const std::exception&) {
                     return false;  // Out of range
@@ -50,7 +50,7 @@ public:
                 }
                 
                 try {
-                    long long val = std::stoll(value);
+                    std::stoll(value);
                     return true;
                 } catch (const std::exception&) {
                     return false;  // Out of range
