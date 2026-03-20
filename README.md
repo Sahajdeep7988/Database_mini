@@ -245,6 +245,5 @@ This is an educational implementation — not production-ready. Known limitation
 These are acknowledged design boundaries, not bugs.
 
 ## Author
-**Sahajdeep Singh** — B.Tech AI & ML, Amity University Punjab  
-Chairperson, IEEE Computer Society Chapter  
+**Sahajdeep Singh** — B.Tech AI & ML, Amity University Punjab    
 sahajdeepsingh404@gmail.com
